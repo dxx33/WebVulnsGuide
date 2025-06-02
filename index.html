@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hack Lab</title>
+    <style>
+        :root {
+            --hacker-green: #20c20e;
+            --matrix-green: #0fff50;
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --terminal-text: #cccccc;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            color: var(--hacker-green);
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--matrix-green);
+            text-shadow: 0 0 5px var(--matrix-green);
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .box {
+            background-color: var(--darker-bg);
+            border: 1px solid var(--hacker-green);
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(32, 194, 14, 0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(32, 194, 14, 0.6);
+            background-color: rgba(32, 194, 14, 0.05);
+        }
+        
+        .box::before {
+            content: ">> ";
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            color: var(--hacker-green);
+        }
+        
+        .box a {
+            text-decoration: none;
+            color: var(--terminal-text);
+            display: block;
+            height: 100%;
+            width: 100%;
+        }
+        
+        .box h3 {
+            color: var(--matrix-green);
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+        
+        .box p {
+            color: var(--terminal-text);
+            font-size: 0.9rem;
+        }
+        
+        /* Terminal-like blinking cursor effect */
+        .cursor {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* Scanlines effect */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                rgba(18, 18, 18, 0.2) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        /* Glitch effect on hover */
+        .box:hover h3 {
+            animation: glitch 0.5s linear infinite;
+        }
+        
+        @keyframes glitch {
+            0% { text-shadow: 1px 0 var(--matrix-green), -1px 0 #ff00ff; }
+            25% { text-shadow: -1px 0 var(--matrix-green), 1px 0 #00ffff; }
+            50% { text-shadow: 1px 0 #ff00ff, -1px 0 var(--matrix-green); }
+            75% { text-shadow: -1px 0 #00ffff, 1px 0 var(--matrix-green); }
+            100% { text-shadow: 1px 0 var(--matrix-green), -1px 0 #ff00ff; }
+        }
+    </style>
+</head>
+<body>
+    <h1>HACK LAB<span class="cursor">_</span></h1>
+    <div class="container">
+        <!-- SQL Injection -->
+        <div class="box">
+            <a href="SQLi.html">
+                <h3>SQL INJECTION</h3>
+                <p>Bypass authentication and extract data</p>
+            </a>
+        </div>
+        
+        <!-- SQL Injection 2 -->
+        <div class="box">
+            <a href="SSRF-2 copy.html">
+                <h3>SSRF 2</h3>
+                <p>Server-Side Request Forgery</p>
+            </a>
+        </div>
+        
+        <!-- XSS -->
+        <div class="box">
+            <a href="xss.html">
+                <h3>XSS</h3>
+                <p>Cross-Site Scripting attacks</p>
+            </a>
+        </div>
+        
+        <!-- SSTI -->
+        <div class="box">
+            <a href="SSTI.html">
+                <h3>SSTI</h3>
+                <p>Server-Side Template Injection</p>
+            </a>
+        </div>
+        
+        <!-- SSRF -->
+        <div class="box">
+            <a href="SSRF-2.html">
+                <h3>SSRF 1</h3>
+                <p>Server-Side Request Forgery</p>
+            </a>
+        </div>
+        
+        <!-- CORS -->
+        <div class="box">
+            <a href="CORS.html">
+                <h3>CORS</h3>
+                <p>Cross-Origin Resource Sharing</p>
+            </a>
+        </div>
+        
+        <!-- CSRF -->
+        <div class="box">
+            <a href="CSRF.html">
+                <h3>CSRF</h3>
+                <p>Cross-Site Request Forgery</p>
+            </a>
+        </div>
+        
+        <!-- OS Command Injection -->
+        <div class="box">
+            <a href="OS-injection.html">
+                <h3>OS COMMAND INJECTION</h3>
+                <p>Execute system commands</p>
+            </a>
+        </div>
+        
+        <!-- Eval Filter Bypass -->
+        <div class="box">
+            <a href="EvalByPass.html">
+                <h3>EVAL FILTER BYPASS</h3>
+                <p>Bypass eval() filters</p>
+            </a>
+        </div>
+        
+        <!-- Prototype Pollution -->
+        <div class="box">
+            <a href="prototype.html">
+                <h3>PROTOTYPE POLLUTION</h3>
+                <p>JavaScript prototype manipulation</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

