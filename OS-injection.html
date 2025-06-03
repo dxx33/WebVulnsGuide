@@ -352,7 +352,10 @@ GroovyShell.evaluate(), ScriptEngine.eval()</pre>
             <div class="interactive-lab">
                 <h3>Basic Steps:</h3>
                 <ol>
-                    <li>Find parameter that executes system commands</li>
+                    <li>Find parameter that executes system commands such as:</li> <li>* File operations (file=, dir=, path=)</li>
+<li>* Network operations (host=, ip=, server=)</li>
+<li>* System commands (cmd=, command=, exec=)</li>
+<li>* Process controls (kill=, restart=, stop=)</li>
                     <li>Test with simple payload: <code>; whoami</code></li>
                     <li>Identify operating system (Linux/Windows)</li>
                     <li>Chain commands with separators</li>
